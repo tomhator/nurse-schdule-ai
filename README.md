@@ -1,38 +1,90 @@
-# Nurse Schedule
+# 간호사 스케줄러 (Nurse Schedule)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+간호사 근무표를 효율적으로 관리할 수 있는 웹 애플리케이션입니다.
 
-## Getting Started
+## 주요 기능
 
-First, run the development server:
+### 📅 월별 근무표 관리
+- 월별 간호사 근무표 생성 및 관리
+- 각 간호사의 근무 유형 설정 (D: 주간, E: 저녁, N: 야간, M: 오전, O: 휴무)
+- 주말 및 공휴일 자동 표시
+- 최소 휴무일 계산 및 표시
+- 부족 인원 실시간 계산 및 표시
+
+### 👩‍⚕️ 간호사 관리
+- 간호사 정보 등록, 수정, 삭제
+- 직급별 관리 (HN: 수간호사, RN: 간호사, AN: 간호조무사)
+- 근무 가능성 설정 (주간/저녁/야간/오전)
+- 야간전담근무자 설정 (야간 근무만 가능)
+- 주말근무 여부 설정
+- 연차 관리 (잔여 연차, 사용 연차)
+
+### 👥 일일 필수 근무 인원 설정
+- 직급별, 근무 유형별 필수 인원 설정
+- 실시간 총 인원 수 계산
+- 근무표와 연동된 부족 인원 표시
+
+## 기술 스택
+
+- **Frontend**: Next.js 15, React, TypeScript
+- **Styling**: Tailwind CSS
+- **Data Storage**: LocalStorage (클라이언트 사이드)
+- **Font**: Pretendard
+
+## 시작하기
+
+### 설치 및 실행
 
 ```bash
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 애플리케이션을 확인할 수 있습니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 사용 방법
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **간호사 등록**: 간호사 관리 페이지에서 간호사 정보를 등록합니다.
+2. **필수 인원 설정**: 일일 필수 근무 인원 설정 페이지에서 각 직급별, 근무 유형별 필수 인원을 설정합니다.
+3. **근무표 작성**: 메인 페이지에서 월별 근무표를 작성하고 관리합니다.
 
-## Learn More
+## 프로젝트 구조
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── page.tsx              # 메인 근무표 페이지
+│   ├── action.ts             # 근무표 관련 액션
+│   ├── nurse/                 # 간호사 관리
+│   │   ├── page.tsx          # 간호사 목록
+│   │   ├── action.ts         # 간호사 관련 액션
+│   │   ├── new/              # 간호사 추가
+│   │   └── [id]/edit/        # 간호사 수정
+│   └── staffing/             # 필수 인원 설정
+│       ├── page.tsx          # 인원 설정 페이지
+│       └── action.ts         # 인원 설정 관련 액션
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 주요 특징
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **반응형 디자인**: 모바일과 데스크톱에서 모두 사용 가능
+- **실시간 계산**: 근무표 작성 시 부족 인원을 실시간으로 계산
+- **직관적 UI**: 간편한 드롭다운과 체크박스로 쉬운 조작
+- **데이터 지속성**: 브라우저 LocalStorage를 통한 데이터 저장
 
-## Deploy on Vercel
+## 라이선스
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+이 프로젝트는 MIT 라이선스 하에 배포됩니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 기여하기
+
+버그 리포트나 기능 제안은 GitHub Issues를 통해 제출해 주세요.
+
+---
+
+**개발자**: 간호사 스케줄러 팀  
+**버전**: 1.0.0  
+**최종 업데이트**: 2025년 10월 10일
