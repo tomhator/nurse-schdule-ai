@@ -1,4 +1,4 @@
-'use server';
+// 클라이언트 사이드 함수들
 
 // 인원 설정 관련 액션들
 
@@ -20,8 +20,8 @@ export interface StaffingData {
   [key: string]: number;
 }
 
-// 직급 목록 불러오기
-export async function getPositions(): Promise<Position[]> {
+// 직급 목록 불러오기 (클라이언트 사이드)
+export function getPositions(): Position[] {
   return [
     { id: 'HN', name: 'HN (수간호사)' },
     { id: 'RN', name: 'RN (간호사)' },
@@ -29,8 +29,8 @@ export async function getPositions(): Promise<Position[]> {
   ];
 }
 
-// 근무 유형 목록 불러오기
-export async function getWorkTypes(): Promise<WorkType[]> {
+// 근무 유형 목록 불러오기 (클라이언트 사이드)
+export function getWorkTypes(): WorkType[] {
   return [
     { id: 'D', name: 'D (주간)', color: 'text-blue-600' },
     { id: 'E', name: 'E (저녁)', color: 'text-orange-600' },
@@ -39,70 +39,76 @@ export async function getWorkTypes(): Promise<WorkType[]> {
   ];
 }
 
-// 인원 설정 저장
-export async function saveStaffingData(data: StaffingData) {
+// 인원 설정 저장 (클라이언트 사이드)
+export function saveStaffingData(data: StaffingData): { success: boolean; message: string } {
   try {
-    // 실제 구현에서는 데이터베이스에 저장
+    localStorage.setItem('staffing_data', JSON.stringify(data));
     return { success: true, message: '인원 설정이 저장되었습니다.' };
   } catch (error) {
     return { success: false, message: '인원 설정 저장에 실패했습니다.' };
   }
 }
 
-// 인원 설정 불러오기
-export async function loadStaffingData(): Promise<StaffingData> {
+// 인원 설정 불러오기 (클라이언트 사이드)
+export function loadStaffingData(): StaffingData {
   try {
-    // 실제 구현에서는 데이터베이스에서 불러오기
+    const savedData = localStorage.getItem('staffing_data');
+    if (savedData) {
+      return JSON.parse(savedData);
+    }
     return {};
   } catch (error) {
     return {};
   }
 }
 
-// 인원 설정 초기화
-export async function resetStaffingData() {
+// 인원 설정 초기화 (클라이언트 사이드)
+export function resetStaffingData(): { success: boolean; message: string } {
   try {
-    // 실제 구현에서는 데이터베이스에서 삭제
+    localStorage.removeItem('staffing_data');
     return { success: true, message: '인원 설정이 초기화되었습니다.' };
   } catch (error) {
     return { success: false, message: '인원 설정 초기화에 실패했습니다.' };
   }
 }
 
-// 특정 직급-근무유형별 인원 수 업데이트
-export async function updateStaffingCount(positionId: string, workTypeId: string, count: number) {
+// 특정 직급-근무유형별 인원 수 업데이트 (클라이언트 사이드)
+export function updateStaffingCount(positionId: string, workTypeId: string, count: number): { success: boolean; message: string } {
   try {
-    // 실제 구현에서는 데이터베이스 업데이트
+    const key = `${positionId}_${workTypeId}`;
+    const currentData = loadStaffingData();
+    currentData[key] = count;
+    saveStaffingData(currentData);
     return { success: true, message: '인원 수가 업데이트되었습니다.' };
   } catch (error) {
     return { success: false, message: '인원 수 업데이트에 실패했습니다.' };
   }
 }
 
-// 총 인원 수 계산
-export async function calculateTotalStaffing(staffingData: StaffingData): Promise<number> {
+// 총 인원 수 계산 (클라이언트 사이드)
+export function calculateTotalStaffing(staffingData: StaffingData): number {
   let total = 0;
   Object.values(staffingData).forEach((count: any) => {
-    if (typeof count === 'number') {
+    if (typeof count === 'number' && !count.toString().startsWith('_')) {
       total += count;
     }
   });
   return total;
 }
 
-// 총 인원 수와 함께 저장
-export async function saveStaffingWithTotal(staffingData: StaffingData) {
+// 총 인원 수와 함께 저장 (클라이언트 사이드)
+export function saveStaffingWithTotal(staffingData: StaffingData): { success: boolean; message: string } {
   try {
-    // 클라이언트 사이드에서만 실행
-    if (typeof window === 'undefined') {
-      return { success: false, message: '클라이언트 사이드에서만 실행 가능합니다.' };
-    }
+    // _totalStaffing을 제외한 순수한 데이터만 추출
+    const cleanData = Object.fromEntries(
+      Object.entries(staffingData).filter(([key]) => key !== '_totalStaffing')
+    );
     
-    const totalStaffing = await calculateTotalStaffing(staffingData);
+    const totalStaffing = calculateTotalStaffing(cleanData);
     
     // 기존 데이터에 총 인원 수 추가
     const dataWithTotal = {
-      ...staffingData,
+      ...cleanData,
       _totalStaffing: totalStaffing
     };
     
@@ -113,14 +119,9 @@ export async function saveStaffingWithTotal(staffingData: StaffingData) {
   }
 }
 
-// 총 인원 수 불러오기
-export async function getTotalStaffing(): Promise<number> {
+// 총 인원 수 불러오기 (클라이언트 사이드)
+export function getTotalStaffing(): number {
   try {
-    // 클라이언트 사이드에서만 실행
-    if (typeof window === 'undefined') {
-      return 0;
-    }
-    
     const savedData = localStorage.getItem('staffing_data');
     if (savedData) {
       const data = JSON.parse(savedData);

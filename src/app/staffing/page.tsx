@@ -73,8 +73,8 @@ export default function StaffingPage() {
   }, []);
 
   // 저장
-  const handleSave = async () => {
-    const result = await saveStaffingWithTotal(staffingData);
+  const handleSave = () => {
+    const result = saveStaffingWithTotal(staffingData);
     if (result.success) {
       alert(result.message);
     } else {

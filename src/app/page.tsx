@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getNurses } from './nurse/action';
+import { getTotalStaffing } from './staffing/action';
 // import { 
 //   saveSchedule, 
 //   loadSchedule, 
@@ -19,45 +21,16 @@ export default function Home() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [shortageData, setShortageData] = useState<{[day: number]: number}>({});
   const [totalRequiredStaffing, setTotalRequiredStaffing] = useState<number>(0);
+  const [nurses, setNurses] = useState<any[]>([]);
 
-  // 간호사 데이터
-  const nurses = [
-    { 
-      id: 1, 
-      name: '김간호',
-      remainingOff: 0,    // 남은 off
-      remainingVacation: 0, // 잔여 연차수
-      usedVacation: 0     // 사용 연차수
-    },
-    { 
-      id: 2, 
-      name: '이간호',
-      remainingOff: 0,
-      remainingVacation: 0,
-      usedVacation: 0
-    },
-    { 
-      id: 3, 
-      name: '박간호',
-      remainingOff: 0,
-      remainingVacation: 0,
-      usedVacation: 0
-    },
-    { 
-      id: 4, 
-      name: '최간호',
-      remainingOff: 0,
-      remainingVacation: 0,
-      usedVacation: 0
-    },
-    { 
-      id: 5, 
-      name: '정간호',
-      remainingOff: 0,
-      remainingVacation: 0,
-      usedVacation: 0
-    }
-  ];
+  // 간호사 데이터 불러오기
+  useEffect(() => {
+    const loadNurses = () => {
+      const nursesData = getNurses();
+      setNurses(nursesData);
+    };
+    loadNurses();
+  }, []);
 
   const monthNames = [
     '1월', '2월', '3월', '4월', '5월', '6월',
@@ -195,45 +168,17 @@ export default function Home() {
 
   // 일일 필수 근무 인원 불러오기
   const getRequiredStaffing = () => {
-    try {
-      const savedData = localStorage.getItem('staffing_data');
-      console.log('저장된 인원 설정 데이터:', savedData);
-      
-      if (savedData) {
-        const staffingData = JSON.parse(savedData);
-        console.log('파싱된 인원 설정 데이터:', staffingData);
-        
-        // _totalStaffing이 있으면 사용
-        if (staffingData._totalStaffing !== undefined) {
-          console.log('저장된 총 인원 수:', staffingData._totalStaffing);
-          return staffingData._totalStaffing;
-        }
-        
-        // 기존 방식으로 계산 (하위 호환성)
-        let totalRequired = 0;
-        Object.values(staffingData).forEach((count: any) => {
-          if (typeof count === 'number' && count !== staffingData._totalStaffing) {
-            totalRequired += count;
-          }
-        });
-        console.log('계산된 필수 인원:', totalRequired);
-        return totalRequired;
-      }
-    } catch (error) {
-      console.error('인원 설정 데이터를 불러오는데 실패했습니다:', error);
-    }
-    console.log('인원 설정 데이터가 없어서 0 반환');
-    return 0;
+    return getTotalStaffing();
   };
 
   // 부족 인원 계산
   const calculateShortage = (day: number) => {
     const currentWorkers = calculateWorkersCount(day);
     const requiredStaffing = getRequiredStaffing();
-    const shortage = requiredStaffing - currentWorkers;
+    const shortage = currentWorkers - requiredStaffing;
     
     // 디버깅용 로그
-    console.log(`날짜 ${day}: 필수인원=${requiredStaffing}, 현재근무자=${currentWorkers}, 부족인원=${shortage}`);
+    console.log(`날짜 ${day}: 현재근무자=${currentWorkers}, 필수인원=${requiredStaffing}, 부족인원=${shortage}`);
     
     return shortage;
   };
@@ -463,8 +408,8 @@ export default function Home() {
             <div>
               {/* 날짜 헤더 */}
               <div className="flex items-center gap-1 mb-2">
-                <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
-                  간호사
+                <div className="w-32 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
+                  간호사명
                 </div>
                 {getDaysInMonth(currentYear, currentMonth).map((day) => (
                   <div
@@ -483,10 +428,10 @@ export default function Home() {
                   남은 off
                 </div>
                 <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
-                  잔여 연차
+                  사용 연차
                 </div>
                 <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
-                  사용 연차
+                  잔여 연차
                 </div>
               </div>
 
@@ -494,7 +439,7 @@ export default function Home() {
               {nurses.map((nurse) => (
                 <div key={nurse.id} className="flex items-center gap-1 mb-1">
                   {/* 간호사 이름 */}
-                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200">
+                  <div className="w-32 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200">
                     {nurse.name}
                   </div>
                   
@@ -549,18 +494,18 @@ export default function Home() {
                   <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
                     {calculateRemainingOff(nurse.id)}
                   </div>
-                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-green-50 border border-gray-200">
-                    {nurse.remainingVacation}
-                  </div>
                   <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-orange-50 border border-gray-200">
                     {nurse.usedVacation}
+                  </div>
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-green-50 border border-gray-200">
+                    {nurse.remainingVacation}
                   </div>
                 </div>
               ))}
             </div>
 
             {/* 근무자 수 합계 행 */}
-            <div className="flex">
+            <div className="flex items-center gap-1 mb-1">
               {/* 간호사 이름 열 */}
               <div className="w-32 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-gray-100 border border-gray-200">
                 근무자 수
@@ -570,7 +515,7 @@ export default function Home() {
               {getDaysInMonth(currentYear, currentMonth).map((day) => (
                 <div 
                   key={day} 
-                  className="w-20 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-gray-100 border border-gray-200"
+                  className="w-13 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-gray-100 border border-gray-200"
                 >
                   {calculateWorkersCount(day)}
                 </div>
@@ -589,7 +534,7 @@ export default function Home() {
             </div>
 
             {/* 부족 인원 행 */}
-            <div className="flex">
+            <div className="flex items-center gap-1 mb-1">
               {/* 간호사 이름 열 */}
               <div className="w-32 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-red-50 border border-gray-200">
                 부족 인원
@@ -601,11 +546,9 @@ export default function Home() {
                 return (
                   <div 
                     key={day} 
-                    className={`w-20 h-10 flex items-center justify-center text-sm font-bold border border-gray-200 ${
+                    className={`w-13 h-10 flex items-center justify-center text-sm font-bold border border-gray-200 ${
                       shortage < 0 
                         ? 'text-red-600 bg-red-100' 
-                        : shortage > 0
-                        ? 'text-orange-600 bg-orange-100'
                         : 'text-green-600 bg-green-50'
                     }`}
                   >
