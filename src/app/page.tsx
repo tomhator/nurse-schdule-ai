@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getNurses } from './nurse/action';
+import { getNurses, saveMonthlySchedulesToNurses } from './nurse/action';
 import { getTotalStaffing } from './staffing/action';
 // import { 
 //   saveSchedule, 
@@ -292,6 +292,12 @@ export default function Home() {
     // 로컬 스토리지에 저장
     const storageKey = `schedule_${currentYear}_${currentMonth}`;
     localStorage.setItem(storageKey, JSON.stringify(currentMonthData));
+
+    // 간호사별 데이터에도 월별 스케줄 반영
+    const nurseSyncResult = saveMonthlySchedulesToNurses(currentYear, currentMonth, currentMonthData);
+    if (!nurseSyncResult.success) {
+      console.warn('간호사별 스케줄 반영 경고:', nurseSyncResult.message);
+    }
     
     alert(`${currentYear}년 ${currentMonth}월 스케줄이 저장되었습니다.`);
   };

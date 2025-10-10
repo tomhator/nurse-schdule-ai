@@ -15,6 +15,14 @@ export interface Nurse {
   nightDedicated: boolean; // 야간전담근무자
   remainingVacation: number; // 잔여 연차
   usedVacation: number; // 사용 연차
+  // 간호사별 월별 스케줄 저장소 (year -> month -> day -> status)
+  schedules?: {
+    [year: number]: {
+      [month: number]: {
+        [day: number]: string;
+      }
+    }
+  };
 }
 
 // 간호사 목록 불러오기 (클라이언트 사이드)
@@ -239,5 +247,52 @@ export function updateNurseVacation(id: number, remainingVacation: number, usedV
     return { success: true, message: '연차 정보가 업데이트되었습니다.' };
   } catch (error) {
     return { success: false, message: '연차 정보 업데이트에 실패했습니다.' };
+  }
+}
+
+// 간호사 월별 스케줄 저장 (클라이언트 사이드)
+// currentMonthData 예: { "<nurseId>-<day>": "D|E|N|M|O|-", ... }
+export function saveMonthlySchedulesToNurses(year: number, month: number, currentMonthData: { [key: string]: string }): { success: boolean; message: string } {
+  try {
+    const savedData = localStorage.getItem('nurses_data');
+    if (!savedData) {
+      return { success: false, message: '간호사 데이터를 찾을 수 없습니다.' };
+    }
+
+    const nurses: Nurse[] = JSON.parse(savedData);
+
+    // 간호사별로 해당 월의 스케줄 매핑
+    const nurseIdToDayStatusMap: { [nurseId: number]: { [day: number]: string } } = {};
+
+    Object.entries(currentMonthData).forEach(([key, status]) => {
+      // key 형식: "<nurseId>-<day>"
+      const [nurseIdStr, dayStr] = key.split('-');
+      const nurseId = parseInt(nurseIdStr, 10);
+      const day = parseInt(dayStr, 10);
+      if (!Number.isNaN(nurseId) && !Number.isNaN(day)) {
+        if (!nurseIdToDayStatusMap[nurseId]) {
+          nurseIdToDayStatusMap[nurseId] = {};
+        }
+        nurseIdToDayStatusMap[nurseId][day] = status;
+      }
+    });
+
+    // 각 간호사 객체에 schedules 병합/설정
+    const updatedNurses = nurses.map((nurse) => {
+      const monthMap = nurseIdToDayStatusMap[nurse.id] || {};
+      if (Object.keys(monthMap).length === 0) return nurse; // 해당 월 데이터 없음
+
+      const schedules = nurse.schedules ? { ...nurse.schedules } : {} as NonNullable<Nurse['schedules']>;
+      const yearMap = schedules[year] ? { ...schedules[year] } : {} as { [month: number]: { [day: number]: string } };
+      yearMap[month] = { ...monthMap };
+      schedules[year] = yearMap;
+
+      return { ...nurse, schedules };
+    });
+
+    localStorage.setItem('nurses_data', JSON.stringify(updatedNurses));
+    return { success: true, message: `${year}년 ${month}월 간호사별 스케줄이 저장되었습니다.` };
+  } catch (error) {
+    return { success: false, message: '간호사별 스케줄 저장에 실패했습니다.' };
   }
 }
