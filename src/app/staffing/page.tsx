@@ -15,6 +15,10 @@ import {
 
 export default function StaffingPage() {
   const [staffingData, setStaffingData] = useState<{[key: string]: number}>({});
+  const [workConstraints, setWorkConstraints] = useState({
+    maxConsecutiveWorkDays: 4,
+    maxConsecutiveOffDays: 3
+  });
 
   // 직급 데이터
   const positions = [
@@ -70,13 +74,25 @@ export default function StaffingPage() {
         console.error('저장된 인원 설정 데이터를 불러오는데 실패했습니다:', error);
       }
     }
+    
+    // 근무 조건 설정 불러오기
+    const savedConstraints = localStorage.getItem('work_constraints');
+    if (savedConstraints) {
+      try {
+        setWorkConstraints(JSON.parse(savedConstraints));
+      } catch (error) {
+        console.error('저장된 근무 조건 설정을 불러오는데 실패했습니다:', error);
+      }
+    }
   }, []);
 
   // 저장
   const handleSave = () => {
     const result = saveStaffingWithTotal(staffingData);
     if (result.success) {
-      alert(result.message);
+      // 근무 조건 설정도 함께 저장
+      localStorage.setItem('work_constraints', JSON.stringify(workConstraints));
+      alert('인원 설정과 근무 조건이 저장되었습니다.');
     } else {
       alert(result.message);
     }
@@ -84,10 +100,15 @@ export default function StaffingPage() {
 
   // 초기화
   const handleReset = () => {
-    if (confirm('인원 설정을 초기화하시겠습니까?')) {
+    if (confirm('인원 설정과 근무 조건을 초기화하시겠습니까?')) {
       setStaffingData({});
+      setWorkConstraints({
+        maxConsecutiveWorkDays: 4,
+        maxConsecutiveOffDays: 3
+      });
       localStorage.removeItem('staffing_data');
-      alert('인원 설정이 초기화되었습니다.');
+      localStorage.removeItem('work_constraints');
+      alert('인원 설정과 근무 조건이 초기화되었습니다.');
     }
   };
   return (
@@ -98,7 +119,7 @@ export default function StaffingPage() {
           <div className="flex justify-between items-center h-16">
             {/* 달력 이동 */}
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-semibold text-gray-900">일일 필수 근무 인원 설정</h1>
+              <h1 className="text-xl font-semibold text-gray-900">근무 조건 설정</h1>
             </div>
 
             {/* 우측 메뉴 */}
@@ -119,7 +140,7 @@ export default function StaffingPage() {
                 href="/staffing"
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
-                일일 필수 근무 인원 설정
+                근무 조건 설정
               </Link>
             </div>
           </div>
@@ -130,7 +151,7 @@ export default function StaffingPage() {
       <main className="schedule max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">일일 필수 근무 인원 설정</h2>
+            <h2 className="text-lg font-semibold text-gray-900">근무 조건 설정</h2>
             
             {/* 액션 버튼들 */}
             <div className="flex gap-3">
@@ -146,6 +167,76 @@ export default function StaffingPage() {
               >
                 저장
               </button>
+            </div>
+          </div>
+          
+          {/* 근무 조건 설정 */}
+          <div className="mb-8 p-6 bg-gray-50 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">근무 조건 설정</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 최대 연속 근무일 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  최대 연속 근무일
+                </label>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setWorkConstraints(prev => ({
+                      ...prev,
+                      maxConsecutiveWorkDays: Math.max(1, prev.maxConsecutiveWorkDays - 1)
+                    }))}
+                    className="w-8 h-8 flex items-center justify-center text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    -
+                  </button>
+                  <span className="w-12 text-center text-lg font-semibold text-gray-900">
+                    {workConstraints.maxConsecutiveWorkDays}
+                  </span>
+                  <button
+                    onClick={() => setWorkConstraints(prev => ({
+                      ...prev,
+                      maxConsecutiveWorkDays: Math.min(10, prev.maxConsecutiveWorkDays + 1)
+                    }))}
+                    className="w-8 h-8 flex items-center justify-center text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm text-gray-600">일</span>
+                </div>
+                <p className="text-xs text-gray-500">간호사가 연속으로 근무할 수 있는 최대 일수</p>
+              </div>
+
+              {/* 최대 연속 휴무일 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  최대 연속 휴무일
+                </label>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setWorkConstraints(prev => ({
+                      ...prev,
+                      maxConsecutiveOffDays: Math.max(1, prev.maxConsecutiveOffDays - 1)
+                    }))}
+                    className="w-8 h-8 flex items-center justify-center text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    -
+                  </button>
+                  <span className="w-12 text-center text-lg font-semibold text-gray-900">
+                    {workConstraints.maxConsecutiveOffDays}
+                  </span>
+                  <button
+                    onClick={() => setWorkConstraints(prev => ({
+                      ...prev,
+                      maxConsecutiveOffDays: Math.min(10, prev.maxConsecutiveOffDays + 1)
+                    }))}
+                    className="w-8 h-8 flex items-center justify-center text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm text-gray-600">일</span>
+                </div>
+                <p className="text-xs text-gray-500">간호사가 연속으로 휴무할 수 있는 최대 일수</p>
+              </div>
             </div>
           </div>
           
@@ -201,9 +292,10 @@ export default function StaffingPage() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <h3 className="text-sm font-medium text-blue-900 mb-2">설정 안내</h3>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• 각 직급별로 근무 유형에 따른 필수 인원을 설정합니다.</li>
-              <li>• 화살표 버튼을 클릭하여 인원 수를 조정할 수 있습니다.</li>
-              <li>• 설정한 인원은 근무표 생성 시 참고됩니다.</li>
+              <li>• <strong>근무 조건 설정:</strong> 최대 연속 근무일과 휴무일을 설정합니다.</li>
+              <li>• <strong>인원 설정:</strong> 각 직급별로 근무 유형에 따른 필수 인원을 설정합니다.</li>
+              <li>• 화살표 버튼을 클릭하여 값을 조정할 수 있습니다.</li>
+              <li>• 설정한 조건과 인원은 근무표 생성 시 엄격하게 적용됩니다.</li>
             </ul>
           </div>
         </div>

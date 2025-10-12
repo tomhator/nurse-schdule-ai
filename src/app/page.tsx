@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getNurses, saveMonthlySchedulesToNurses } from './nurse/action';
-import { getTotalStaffing } from './staffing/action';
+import { getTotalStaffing, getStaffingRequirements } from './staffing/action';
+import { optimizeSchedule, ScheduleConstraints, Nurse } from './schedule-optimizer';
 // import { 
 //   saveSchedule, 
 //   loadSchedule, 
@@ -125,6 +126,36 @@ export default function Home() {
     return weekendHolidayCount;
   };
 
+  // 각 간호사의 N(야간) 근무 개수 계산
+  const calculateNurseNCount = (nurseId: number) => {
+    const currentMonthData = scheduleData[currentYear]?.[currentMonth] || {};
+    let nCount = 0;
+    
+    getDaysInMonth(currentYear, currentMonth).forEach(day => {
+      const key = `${nurseId}-${day}`;
+      if (currentMonthData[key] === 'N') {
+        nCount++;
+      }
+    });
+    
+    return nCount;
+  };
+
+  // 각 간호사의 O(휴무) 개수 계산
+  const calculateNurseOCount = (nurseId: number) => {
+    const currentMonthData = scheduleData[currentYear]?.[currentMonth] || {};
+    let oCount = 0;
+    
+    getDaysInMonth(currentYear, currentMonth).forEach(day => {
+      const key = `${nurseId}-${day}`;
+      if (currentMonthData[key] === 'O') {
+        oCount++;
+      }
+    });
+    
+    return oCount;
+  };
+
   // 각 간호사의 O(휴무) 개수 계산
   const calculateNurseOffDays = (nurseId: number) => {
     const currentMonthData = scheduleData[currentYear]?.[currentMonth] || {};
@@ -146,9 +177,6 @@ export default function Home() {
     const usedOffDays = calculateNurseOffDays(nurseId);
     const remaining = Math.max(0, minDaysOff - usedOffDays);
     
-    // 디버깅용 로그
-    console.log(`간호사 ${nurseId}: 최소휴무일=${minDaysOff}, 사용된휴무=${usedOffDays}, 남은휴무=${remaining}`);
-    
     return remaining;
   };
 
@@ -166,6 +194,20 @@ export default function Home() {
     return count;
   };
 
+  // 각 날짜별 O근무자 수 계산
+  const calculateOCount = (day: number) => {
+    let count = 0;
+    nurses.forEach(nurse => {
+      const key = `${nurse.id}-${day}`;
+      const currentMonthData = scheduleData[currentYear]?.[currentMonth] || {};
+      const shift = currentMonthData[key];
+      if (shift === 'O') {
+        count++;
+      }
+    });
+    return count;
+  };
+
   // 일일 필수 근무 인원 불러오기
   const getRequiredStaffing = () => {
     return getTotalStaffing();
@@ -175,10 +217,7 @@ export default function Home() {
   const calculateShortage = (day: number) => {
     const currentWorkers = calculateWorkersCount(day);
     const requiredStaffing = getRequiredStaffing();
-    const shortage = currentWorkers - requiredStaffing;
-    
-    // 디버깅용 로그
-    console.log(`날짜 ${day}: 현재근무자=${currentWorkers}, 필수인원=${requiredStaffing}, 부족인원=${shortage}`);
+    const shortage = Math.max(0, requiredStaffing - currentWorkers);
     
     return shortage;
   };
@@ -255,7 +294,97 @@ export default function Home() {
   };
 
   const handleScheduleRecommend = () => {
-    alert('스케줄 추천 기능은 준비 중입니다.');
+    if (nurses.length === 0) {
+      alert('간호사 정보가 없습니다. 먼저 간호사를 등록해주세요.');
+      return;
+    }
+
+    if (confirm('현재 스케줄을 자동 추천으로 덮어쓰시겠습니까?')) {
+      try {
+        // 근무 조건 설정 불러오기
+        const savedConstraints = localStorage.getItem('work_constraints');
+        let workConstraints = {
+          maxConsecutiveWorkDays: 4,
+          maxConsecutiveOffDays: 3
+        };
+        
+        if (savedConstraints) {
+          try {
+            workConstraints = JSON.parse(savedConstraints);
+          } catch (error) {
+            console.error('근무 조건 설정을 불러오는데 실패했습니다:', error);
+          }
+        }
+
+        // 제약 조건 설정
+        console.log('근무 조건 설정:', workConstraints);
+        const constraints: ScheduleConstraints = {
+          minDaysOff: calculateMinDaysOff(currentYear, currentMonth),
+          maxConsecutiveDays: workConstraints.maxConsecutiveWorkDays, // 설정된 최대 연속 근무일
+          maxConsecutiveOffDays: workConstraints.maxConsecutiveOffDays, // 설정된 최대 연속 휴무일
+          maxNightShifts: 8, // 최대 8회 야간 근무
+          weekendWorkRequired: true
+        };
+        console.log('적용된 제약 조건:', constraints);
+
+        // 필수 인원 요구사항 설정 (staffing 페이지 데이터 사용)
+        const staffingRequirements = getStaffingRequirements();
+
+        // 현재 테이블 상태를 2차원 배열로 저장
+        const currentScheduleArray = saveCurrentTableToArray(nurses, currentYear, currentMonth, scheduleData);
+        console.log('=== 현재 저장된 테이블 2차원 배열 ===');
+        console.log(currentScheduleArray);
+
+        // scheduleData를 optimizeSchedule에서 사용할 수 있는 형태로 변환
+        const initialSchedule: { [nurseId: number]: { [day: number]: string } } = {};
+        nurses.forEach(nurse => {
+          initialSchedule[nurse.id] = {};
+          const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+          for (let day = 1; day <= daysInMonth; day++) {
+            const key = `${nurse.id}-${day}`;
+            initialSchedule[nurse.id][day] = scheduleData[currentYear]?.[currentMonth]?.[key] || '-';
+          }
+        });
+
+        // 스케줄 최적화 실행
+        const result = optimizeSchedule(
+          nurses,
+          currentYear,
+          currentMonth,
+          staffingRequirements,
+          constraints,
+          initialSchedule
+        );
+
+        // 추천된 스케줄을 현재 스케줄 데이터에 적용 (성공/실패 관계없이)
+        const newScheduleData = { ...scheduleData };
+        if (!newScheduleData[currentYear]) {
+          newScheduleData[currentYear] = {};
+        }
+        if (!newScheduleData[currentYear][currentMonth]) {
+          newScheduleData[currentYear][currentMonth] = {};
+        }
+
+        // 간호사별 스케줄을 키-값 형태로 변환
+        Object.entries(result.schedule).forEach(([nurseId, nurseSchedule]) => {
+          Object.entries(nurseSchedule).forEach(([day, workType]) => {
+            const key = `${nurseId}-${day}`;
+            newScheduleData[currentYear][currentMonth][key] = workType;
+          });
+        });
+
+        setScheduleData(newScheduleData);
+
+        if (result.success) {
+          alert('스케줄 추천이 완료되었습니다!');
+        } else {
+          alert(`스케줄이 생성되었지만 일부 제약 조건을 위반했습니다:\n${result.violations.join('\n')}\n\n수동으로 조정해주세요.`);
+        }
+      } catch (error) {
+        alert('스케줄 추천 중 오류가 발생했습니다.');
+        console.error('스케줄 추천 오류:', error);
+      }
+    }
   };
 
   const handleScheduleReset = () => {
@@ -350,7 +479,7 @@ export default function Home() {
                   href="/staffing"
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  일일 필수 근무 인원 설정
+                  근무 조건 설정
                 </Link>
               </div>
           </div>
@@ -379,10 +508,9 @@ export default function Home() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleScheduleRecommend}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  스케줄 추천 (준비중)
+                  스케줄 추천
                 </button>
                 <button
                   onClick={handleScheduleReset}
@@ -431,6 +559,12 @@ export default function Home() {
                 ))}
                 {/* 연차 정보 헤더 */}
                 <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
+                  N개수
+                </div>
+                <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
+                  O개수
+                </div>
+                <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
                   남은 off
                 </div>
                 <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200">
@@ -442,11 +576,31 @@ export default function Home() {
               </div>
 
               {/* 간호사별 근무표 행 */}
-              {nurses.map((nurse) => (
+              {nurses
+                .sort((a, b) => {
+                  // HN > RN > N-RN > AN 순서로 정렬
+                  const getSortOrder = (nurse: any) => {
+                    if (nurse.position === 'HN') return 1;
+                    if (nurse.position === 'RN' && !nurse.nightDedicated) return 2;
+                    if (nurse.nightDedicated) return 3;
+                    if (nurse.position === 'AN') return 4;
+                    return 5;
+                  };
+                  
+                  const orderA = getSortOrder(a);
+                  const orderB = getSortOrder(b);
+                  
+                  if (orderA !== orderB) {
+                    return orderA - orderB;
+                  }
+                  
+                  return a.name.localeCompare(b.name);
+                })
+                .map((nurse) => (
                 <div key={nurse.id} className="flex items-center gap-1 mb-1">
                   {/* 간호사 이름 */}
                   <div className="w-32 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200">
-                    {nurse.name}
+                    {nurse.nightDedicated ? `N-${nurse.name}` : nurse.name}
                   </div>
                   
                   {/* 각 날짜별 근무 셀 */}
@@ -471,7 +625,7 @@ export default function Home() {
                         {/* 현재 근무 상태 표시 */}
                         <div className={`w-full h-full flex items-center justify-center text-sm font-medium ${statusOption?.color || 'text-gray-500'}`}>
                           {currentStatus}
-                        </div>
+        </div>
                         
                         {/* 드롭다운 메뉴 */}
                         {isDropdownOpen && (
@@ -497,6 +651,12 @@ export default function Home() {
                   })}
                   
                   {/* 연차 정보 셀들 */}
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-purple-50 border border-gray-200">
+                    {calculateNurseNCount(nurse.id)}
+                  </div>
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-yellow-50 border border-gray-200">
+                    {calculateNurseOCount(nurse.id)}
+                  </div>
                   <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
                     {calculateRemainingOff(nurse.id)}
                   </div>
@@ -537,6 +697,12 @@ export default function Home() {
               <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-gray-100 border border-gray-200">
                 -
               </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-gray-100 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-gray-100 border border-gray-200">
+                -
+              </div>
             </div>
 
             {/* 부족 인원 행 */}
@@ -553,12 +719,12 @@ export default function Home() {
                   <div 
                     key={day} 
                     className={`w-13 h-10 flex items-center justify-center text-sm font-bold border border-gray-200 ${
-                      shortage < 0 
+                      shortage > 0 
                         ? 'text-red-600 bg-red-100' 
                         : 'text-green-600 bg-green-50'
                     }`}
                   >
-                    {shortage < 0 ? shortage : shortage > 0 ? `-${shortage}` : '0'}
+                    {shortage}
                   </div>
                 );
               })}
@@ -573,10 +739,79 @@ export default function Home() {
               <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-red-50 border border-gray-200">
                 -
               </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-red-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-red-50 border border-gray-200">
+                -
+              </div>
+            </div>
+
+            {/* 일일 O근무자 수 행 */}
+            <div className="flex items-center gap-1 mb-1">
+              {/* 간호사 이름 열 */}
+              <div className="w-32 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-yellow-50 border border-gray-200">
+                O근무자 수
+              </div>
+              
+              {/* 각 날짜별 O근무자 수 */}
+              {getDaysInMonth(currentYear, currentMonth).map((day) => (
+                <div 
+                  key={day} 
+                  className="w-13 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-yellow-50 border border-gray-200"
+                >
+                  {calculateOCount(day)}
+                </div>
+              ))}
+              
+              {/* 연차 정보 열들 (빈 공간) */}
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-yellow-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-yellow-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-yellow-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-yellow-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-yellow-50 border border-gray-200">
+                -
+              </div>
             </div>
           </div>
         </div>
       </main>
     </div>
   );
+}
+
+// 현재 테이블 상태를 2차원 배열로 저장
+function saveCurrentTableToArray(nurses: Nurse[], year: number, month: number, scheduleData: {[year: number]: {[month: number]: {[key: string]: string}}}): string[][] {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const scheduleArray: string[][] = [];
+  
+  // 헤더 행 (날짜)
+  const headerRow = ['간호사', ...Array.from({ length: daysInMonth }, (_, i) => (i + 1).toString())];
+  scheduleArray.push(headerRow);
+  
+  // 각 간호사별 행
+  nurses.forEach(nurse => {
+    // 야간전담 간호사는 이름 앞에 N- 접두사 추가
+    const displayName = nurse.nightDedicated ? `N-${nurse.name}` : nurse.name;
+    const nurseRow = [displayName];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      // scheduleData에서 해당 간호사의 해당 날짜 스케줄 가져오기
+      const key = `${nurse.id}-${day}`;
+      const workType = scheduleData[year]?.[month]?.[key] || '-';
+      nurseRow.push(workType);
+    }
+    
+    scheduleArray.push(nurseRow);
+  });
+  
+  return scheduleArray;
 }
