@@ -132,3 +132,38 @@ export function getTotalStaffing(): number {
   }
   return 0;
 }
+
+// 필수 인원 설정 데이터 불러오기 (클라이언트 사이드)
+export function getStaffingRequirements(): { [position: string]: { [workType: string]: number } } {
+  try {
+    const savedData = localStorage.getItem('staffing_data');
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      const requirements: { [position: string]: { [workType: string]: number } } = {};
+      
+      // _totalStaffing 제외한 데이터에서 직급별, 근무유형별 인원 추출
+      Object.entries(data).forEach(([key, value]) => {
+        if (key !== '_totalStaffing' && typeof value === 'number') {
+          const [position, workType] = key.split('-');
+          if (position && workType) {
+            if (!requirements[position]) {
+              requirements[position] = {};
+            }
+            requirements[position][workType] = value;
+          }
+        }
+      });
+      
+      return requirements;
+    }
+  } catch (error) {
+    console.error('필수 인원 설정을 불러오는데 실패했습니다:', error);
+  }
+  
+  // 기본값 반환
+  return {
+    'HN': { 'D': 1, 'E': 1, 'N': 0, 'M': 1 },
+    'RN': { 'D': 2, 'E': 2, 'N': 1, 'M': 2 },
+    'AN': { 'D': 1, 'E': 1, 'N': 0, 'M': 1 }
+  };
+}

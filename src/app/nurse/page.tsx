@@ -114,7 +114,7 @@ export default function NursePage() {
                 href="/staffing"
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
-                일일 필수 근무 인원 설정
+                근무 조건 설정
               </Link>
             </div>
           </div>
@@ -150,7 +150,16 @@ export default function NursePage() {
                 </tr>
               </thead>
               <tbody>
-                {nurses.map((nurse) => (
+                {nurses
+                  .sort((a, b) => {
+                    const positionOrder: { [key: string]: number } = { 'HN': 1, 'RN': 2, 'AN': 3 };
+                    const positionDiff = positionOrder[a.position] - positionOrder[b.position];
+                    if (positionDiff !== 0) {
+                      return positionDiff;
+                    }
+                    return a.name.localeCompare(b.name);
+                  })
+                  .map((nurse) => (
                   <tr key={nurse.id} className="border-b border-gray-200 last:border-b-0">
                     <td className="px-4 py-3 text-sm text-gray-900">{nurse.name}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{nurse.position}</td>
