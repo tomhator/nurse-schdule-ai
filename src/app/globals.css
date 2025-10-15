@@ -118,3 +118,9 @@ input[type="number"]:focus {
 .schedule-container {
   position: relative;
 }
+
+/* 근무 타입별 색상 스타일 */
+.work-type-E {
+  color: #0ea5e9; /* 하늘색 */
+  font-weight: 600;
+}

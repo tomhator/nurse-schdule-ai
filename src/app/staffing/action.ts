@@ -33,7 +33,7 @@ export function getPositions(): Position[] {
 export function getWorkTypes(): WorkType[] {
   return [
     { id: 'D', name: 'D (주간)', color: 'text-blue-600' },
-    { id: 'E', name: 'E (저녁)', color: 'text-orange-600' },
+    { id: 'E', name: 'E (저녁)', color: 'text-blue-100' },
     { id: 'N', name: 'N (야간)', color: 'text-purple-600' },
     { id: 'M', name: 'M (오전)', color: 'text-green-600' }
   ];

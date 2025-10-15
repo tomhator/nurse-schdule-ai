@@ -253,7 +253,7 @@ export default function NursePage() {
                   const color =
                     status === 'O' ? 'text-red-600' :
                     status === 'D' ? 'text-blue-600' :
-                    status === 'E' ? 'text-orange-600' :
+                    status === 'E' ? 'text-blue-100' :
                     status === 'N' ? 'text-purple-600' :
                     status === 'M' ? 'text-green-600' : 'text-gray-400';
                   return (

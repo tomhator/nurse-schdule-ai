@@ -577,12 +577,15 @@ function createANSchedule(
                    (workDays >= maxWorkDays) ||
                    consecutiveWorkDays >= constraints.maxConsecutiveDays;
     
+    console.log(`${nurse.name} ${day}일: canWork=${canWork}, mustOff=${mustOff}, consecutiveWorkDays=${consecutiveWorkDays}, maxConsecutiveDays=${constraints.maxConsecutiveDays}`);
+    
     if (mustOff || !canWork) {
       // 휴무 배치
       nurseSchedule[day] = 'O';
       offDays++;
       consecutiveOffDays++;
       consecutiveWorkDays = 0;
+      console.log(`${nurse.name}: ${day}일 휴무 배치 (mustOff=${mustOff}, canWork=${canWork})`);
     } else {
       // 근무 배치 (AN은 D, E, M 위주)
       const availableWorkTypes = getAvailableWorkTypes(nurse, day, isWeekend, isHolidayDay);
@@ -645,7 +648,29 @@ function createANSchedule(
     console.log(`${nurse.name}: 최소 휴무일 부족 (${offDays}/${minOffDays}), 추가 조정 필요`);
   }
   
-  // 4단계: 최대 연속 휴무일 초과 시 강제 근무 배치
+  // 4단계: 최대 연속 근무일 재검증 및 강제 휴무 배치
+  console.log(`${nurse.name}: 최대 연속 근무일 재검증 시작`);
+  let finalConsecutiveWorkDays = 0;
+  
+  for (let i = 0; i < daysInMonth.length; i++) {
+    const day = daysInMonth[i];
+    const workType = nurseSchedule[day];
+    
+    if (workType && workType !== 'O' && workType !== '-') {
+      finalConsecutiveWorkDays++;
+      
+      // 최대 연속 근무일 초과 시 강제 휴무 배치
+      if (finalConsecutiveWorkDays > constraints.maxConsecutiveDays) {
+        nurseSchedule[day] = 'O';
+        console.log(`${nurse.name}: 최대 연속 근무일 초과로 ${day}일 강제 O 배치 (${finalConsecutiveWorkDays}일 > ${constraints.maxConsecutiveDays}일)`);
+        finalConsecutiveWorkDays = 0;
+      }
+    } else {
+      finalConsecutiveWorkDays = 0;
+    }
+  }
+  
+  // 5단계: 최대 연속 휴무일 초과 시 강제 근무 배치
   const maxConsecutiveOffDays = constraints.maxConsecutiveOffDays || 3;
   let finalConsecutiveOffDays = 0;
   
@@ -670,6 +695,28 @@ function createANSchedule(
       }
     } else {
       finalConsecutiveOffDays = 0;
+    }
+  }
+  
+  // 6단계: 최종 연속 근무일 검증 및 강제 수정
+  console.log(`${nurse.name}: 최종 연속 근무일 검증 시작`);
+  let finalCheckConsecutiveWorkDays = 0;
+  
+  for (let i = 0; i < daysInMonth.length; i++) {
+    const day = daysInMonth[i];
+    const workType = nurseSchedule[day];
+    
+    if (workType && workType !== 'O' && workType !== '-') {
+      finalCheckConsecutiveWorkDays++;
+      
+      // 최대 연속 근무일 초과 시 강제 휴무 배치 (무조건 적용)
+      if (finalCheckConsecutiveWorkDays > constraints.maxConsecutiveDays) {
+        nurseSchedule[day] = 'O';
+        console.log(`${nurse.name}: 최종 검증 - 최대 연속 근무일 초과로 ${day}일 강제 O 배치 (${finalCheckConsecutiveWorkDays}일 > ${constraints.maxConsecutiveDays}일) - 무조건 적용`);
+        finalCheckConsecutiveWorkDays = 0;
+      }
+    } else {
+      finalCheckConsecutiveWorkDays = 0;
     }
   }
   

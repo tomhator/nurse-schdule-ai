@@ -623,7 +623,7 @@ export default function Home() {
                         }}
                       >
                         {/* 현재 근무 상태 표시 */}
-                        <div className={`w-full h-full flex items-center justify-center text-sm font-medium ${statusOption?.color || 'text-gray-500'}`}>
+                        <div className={`w-full h-full flex items-center justify-center text-sm font-medium ${statusOption?.color || 'text-gray-500'} ${currentStatus === 'E' ? 'work-type-E' : ''}`}>
                           {currentStatus}
         </div>
                         

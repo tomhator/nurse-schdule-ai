@@ -30,7 +30,7 @@ export default function StaffingPage() {
   // 근무 유형 (O 제외)
   const workTypes = [
     { id: 'D', name: 'D (주간)', color: 'text-blue-600' },
-    { id: 'E', name: 'E (저녁)', color: 'text-orange-600' },
+    { id: 'E', name: 'E (저녁)', color: 'text-blue-100' },
     { id: 'N', name: 'N (야간)', color: 'text-purple-600' },
     { id: 'M', name: 'M (오전)', color: 'text-green-600' }
   ];
