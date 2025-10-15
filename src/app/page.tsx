@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getNurses, saveMonthlySchedulesToNurses } from './nurse/action';
 import { getTotalStaffing, getStaffingRequirements } from './staffing/action';
-import { optimizeSchedule, ScheduleConstraints, Nurse } from './schedule-optimizer';
+import { optimizeSchedule } from './schedule-optimizer';
+import { ScheduleConstraints, Nurse } from './types';
 // import { 
 //   saveSchedule, 
 //   loadSchedule, 
@@ -202,6 +203,20 @@ export default function Home() {
       const currentMonthData = scheduleData[currentYear]?.[currentMonth] || {};
       const shift = currentMonthData[key];
       if (shift === 'O') {
+        count++;
+      }
+    });
+    return count;
+  };
+
+  // 일일 각 근무 유형별 근무자 수 계산
+  const calculateWorkTypeCount = (day: number, workType: string) => {
+    let count = 0;
+    nurses.forEach(nurse => {
+      const key = `${nurse.id}-${day}`;
+      const currentMonthData = scheduleData[currentYear]?.[currentMonth] || {};
+      const shift = currentMonthData[key];
+      if (shift === workType) {
         count++;
       }
     });
@@ -575,8 +590,9 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* 간호사별 근무표 행 */}
+              {/* RN/HN 간호사별 근무표 행 (AN 제외) */}
               {nurses
+                .filter(n => n.position !== 'AN')
                 .sort((a, b) => {
                   // HN > RN > N-RN > AN 순서로 정렬
                   const getSortOrder = (nurse: any) => {
@@ -626,6 +642,86 @@ export default function Home() {
                         <div className={`w-full h-full flex items-center justify-center text-sm font-medium ${statusOption?.color || 'text-gray-500'} ${currentStatus === 'E' ? 'work-type-E' : ''}`}>
                           {currentStatus}
         </div>
+                        
+                        {/* 드롭다운 메뉴 */}
+                        {isDropdownOpen && (
+                          <div className="absolute top-full left-0 z-[100] mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg">
+                            {workStatusOptions.map((option) => (
+                              <div
+                                key={option.value}
+                                className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${option.color} ${
+                                  currentStatus === option.value ? 'bg-blue-50' : ''
+                                }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateSchedule(nurse.id, day, option.value);
+                                }}
+                              >
+                                {option.label}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  
+                  {/* 연차 정보 셀들 */}
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-purple-50 border border-gray-200">
+                    {calculateNurseNCount(nurse.id)}
+                  </div>
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-yellow-50 border border-gray-200">
+                    {calculateNurseOCount(nurse.id)}
+                  </div>
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
+                    {calculateRemainingOff(nurse.id)}
+                  </div>
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-orange-50 border border-gray-200">
+                    {nurse.usedVacation}
+                  </div>
+                  <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-green-50 border border-gray-200">
+                    {nurse.remainingVacation}
+                  </div>
+                </div>
+              ))}
+
+              {/* RN/HN과 AN 사이 공백 */}
+              <div className="h-6" />
+
+              {/* AN 간호사별 근무표 행 */}
+              {nurses
+                .filter(n => n.position === 'AN')
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((nurse) => (
+                <div key={nurse.id} className="flex items-center gap-1 mb-1">
+                  {/* 간호사 이름 */}
+                  <div className="w-32 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200">
+                    {nurse.name}
+                  </div>
+                  
+                  {/* 각 날짜별 근무 셀 */}
+                  {getDaysInMonth(currentYear, currentMonth).map((day) => {
+                    const currentStatus = getCurrentStatus(nurse.id, day);
+                    const isDropdownOpen = activeDropdown === `${nurse.id}-${day}`;
+                    const statusOption = workStatusOptions.find(option => option.value === currentStatus);
+                    
+                    return (
+                      <div
+                        key={day}
+                        className={`relative w-13 h-10 border border-gray-200 cursor-pointer hover:bg-blue-50 transition-colors ${
+                          isWeekendOrHoliday(currentYear, currentMonth, day)
+                            ? 'bg-red-50'
+                            : 'bg-white'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleDropdown(nurse.id, day);
+                        }}
+                      >
+                        {/* 현재 근무 상태 표시 */}
+                        <div className={`w-full h-full flex items-center justify-center text-sm font-medium ${statusOption?.color || 'text-gray-500'} ${currentStatus === 'E' ? 'work-type-E' : ''}`}>
+                          {currentStatus}
+                        </div>
                         
                         {/* 드롭다운 메뉴 */}
                         {isDropdownOpen && (
@@ -743,6 +839,138 @@ export default function Home() {
                 -
               </div>
               <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-red-50 border border-gray-200">
+                -
+              </div>
+            </div>
+
+            {/* D 근무자 수 행 */}
+            <div className="flex items-center gap-1 mb-1">
+              <div className="w-32 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-blue-50 border border-gray-200">
+                D 근무자
+              </div>
+              {getDaysInMonth(currentYear, currentMonth).map((day) => {
+                const dCount = calculateWorkTypeCount(day, 'D');
+                return (
+                  <div 
+                    key={day} 
+                    className="w-13 h-10 flex items-center justify-center text-sm font-bold text-blue-600 bg-blue-50 border border-gray-200"
+                  >
+                    {dCount}
+                  </div>
+                );
+              })}
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-blue-50 border border-gray-200">
+                -
+              </div>
+            </div>
+
+            {/* E 근무자 수 행 */}
+            <div className="flex items-center gap-1 mb-1">
+              <div className="w-32 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-cyan-50 border border-gray-200">
+                E 근무자
+              </div>
+              {getDaysInMonth(currentYear, currentMonth).map((day) => {
+                const eCount = calculateWorkTypeCount(day, 'E');
+                return (
+                  <div 
+                    key={day} 
+                    className="w-13 h-10 flex items-center justify-center text-sm font-bold text-cyan-600 bg-cyan-50 border border-gray-200"
+                  >
+                    {eCount}
+                  </div>
+                );
+              })}
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-cyan-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-cyan-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-cyan-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-cyan-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-cyan-50 border border-gray-200">
+                -
+              </div>
+            </div>
+
+            {/* N 근무자 수 행 */}
+            <div className="flex items-center gap-1 mb-1">
+              <div className="w-32 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-purple-50 border border-gray-200">
+                N 근무자
+              </div>
+              {getDaysInMonth(currentYear, currentMonth).map((day) => {
+                const nCount = calculateWorkTypeCount(day, 'N');
+                return (
+                  <div 
+                    key={day} 
+                    className="w-13 h-10 flex items-center justify-center text-sm font-bold text-purple-600 bg-purple-50 border border-gray-200"
+                  >
+                    {nCount}
+                  </div>
+                );
+              })}
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-purple-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-purple-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-purple-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-purple-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-purple-50 border border-gray-200">
+                -
+              </div>
+            </div>
+
+            {/* M 근무자 수 행 */}
+            <div className="flex items-center gap-1 mb-1">
+              <div className="w-32 h-10 flex items-center justify-center text-sm font-bold text-gray-900 bg-orange-50 border border-gray-200">
+                M 근무자
+              </div>
+              {getDaysInMonth(currentYear, currentMonth).map((day) => {
+                const mCount = calculateWorkTypeCount(day, 'M');
+                return (
+                  <div 
+                    key={day} 
+                    className="w-13 h-10 flex items-center justify-center text-sm font-bold text-orange-600 bg-orange-50 border border-gray-200"
+                  >
+                    {mCount}
+                  </div>
+                );
+              })}
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-orange-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-orange-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-orange-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-orange-50 border border-gray-200">
+                -
+              </div>
+              <div className="w-20 h-10 flex items-center justify-center text-sm font-medium text-gray-900 bg-orange-50 border border-gray-200">
                 -
               </div>
             </div>

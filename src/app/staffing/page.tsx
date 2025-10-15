@@ -30,7 +30,7 @@ export default function StaffingPage() {
   // 근무 유형 (O 제외)
   const workTypes = [
     { id: 'D', name: 'D (주간)', color: 'text-blue-600' },
-    { id: 'E', name: 'E (저녁)', color: 'text-blue-100' },
+    { id: 'E', name: 'E (저녁)', color: 'text-blue-400' },
     { id: 'N', name: 'N (야간)', color: 'text-purple-600' },
     { id: 'M', name: 'M (오전)', color: 'text-green-600' }
   ];
@@ -62,6 +62,13 @@ export default function StaffingPage() {
   const getCurrentStaffing = (positionId: string, workTypeId: string) => {
     const key = `${positionId}-${workTypeId}`;
     return staffingData[key] || 0;
+  };
+
+  // 각 근무 유형별 총 합계 계산
+  const getWorkTypeTotal = (workTypeId: string) => {
+    return positions.reduce((total, position) => {
+      return total + getCurrentStaffing(position.id, workTypeId);
+    }, 0);
   };
 
   // 저장된 데이터 불러오기
@@ -284,6 +291,20 @@ export default function StaffingPage() {
                     ))}
                   </tr>
                 ))}
+                
+                {/* 합계 행 */}
+                <tr className="border-b border-gray-200 bg-blue-50">
+                  <td className="px-4 py-3 text-sm font-bold text-gray-900 bg-blue-100">
+                    합계 (A)
+                  </td>
+                  {workTypes.map((workType) => (
+                    <td key={workType.id} className="px-4 py-3 text-center">
+                      <span className={`text-lg font-bold ${workType.color}`}>
+                        {getWorkTypeTotal(workType.id)}
+                      </span>
+                    </td>
+                  ))}
+                </tr>
               </tbody>
             </table>
           </div>
@@ -294,8 +315,10 @@ export default function StaffingPage() {
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• <strong>근무 조건 설정:</strong> 최대 연속 근무일과 휴무일을 설정합니다.</li>
               <li>• <strong>인원 설정:</strong> 각 직급별로 근무 유형에 따른 필수 인원을 설정합니다.</li>
+              <li>• <strong>합계 (A):</strong> 각 근무 유형별 총 필요 인원 수를 표시합니다.</li>
               <li>• 화살표 버튼을 클릭하여 값을 조정할 수 있습니다.</li>
               <li>• 설정한 조건과 인원은 근무표 생성 시 엄격하게 적용됩니다.</li>
+              <li>• <strong>자동 조정:</strong> 실제 근무표에서 부족한 근무 유형이 있으면 자동으로 조정됩니다.</li>
             </ul>
           </div>
         </div>
