@@ -14,7 +14,7 @@ import {
   removeNightDedicatedDEWork
 } from './schedulers/night-dedicated-scheduler';
 import { createRNSchedule, applyRNScheduleConditions, applyRNAlternateOffPattern } from './schedulers/rn-scheduler';
-// AN 스케줄 관련 로직 제거됨
+import { createANSchedule, applyANAlternateOffPattern, applyANWeeklyNSchedule, applyANDDEOPattern, equalizeANSchedules } from './schedulers/an-scheduler';
 
 // 제약조건 로직 임포트
 import {
@@ -80,12 +80,31 @@ export function optimizeSchedule(
     applyRNAlternateOffPattern(sortedNurses, schedule, daysInMonth);
     console.log('=== RN 교대 휴무 선배치 완료 ===');
 
-    // 4단계: 우선순위에 따라 스케줄 작성 (미리 입력된 부분은 건드리지 않음)
+    // 3.5단계: AN N근무 시프트 배정 (일/월/목)
+    console.log('=== AN N근무 시프트 배정 시작 ===');
+    const anNurses = sortedNurses.filter(n => n.position === 'AN');
+    if (anNurses.length > 0) {
+      applyANWeeklyNSchedule(anNurses, schedule, daysInMonth, year, month);
+    }
+    console.log('=== AN N근무 시프트 배정 완료 ===');
+
+    // 3.6단계: AN DDEO 패턴 기반 스케줄 배정
+    console.log('=== AN DDEO 패턴 배정 시작 ===');
+    if (anNurses.length > 0) {
+      applyANDDEOPattern(anNurses, schedule, daysInMonth, year, month);
+    }
+    console.log('=== AN DDEO 패턴 배정 완료 ===');
+
+    // 4단계: AN 교대 휴무 선배치 (저장된 O 보존 + 라운드로빈 O)
+    console.log('=== AN 교대 휴무 선배치 시작 ===');
+    applyANAlternateOffPattern(sortedNurses, schedule, daysInMonth);
+    console.log('=== AN 교대 휴무 선배치 완료 ===');
+
+    // 5단계: 우선순위에 따라 스케줄 작성 (미리 입력된 부분은 건드리지 않음)
     // 우선순위: HN > 야간근무자 > RN > AN
     const priorityGroups = getNursesByPriority(sortedNurses);
-    const filteredGroups = priorityGroups.filter(group => group.name !== 'AN 간호사');
     
-    filteredGroups.forEach((group, groupIndex) => {
+    priorityGroups.forEach((group, groupIndex) => {
       console.log(`=== ${group.name} 그룹 스케줄 작성 시작 ===`);
       
       // 야간전담 간호사들은 교차 배정
@@ -119,11 +138,13 @@ export function optimizeSchedule(
           if (nurse.position === 'HN') {
             nurseSchedule = createHNSchedule(nurse, daysInMonth, year, month, schedule);
           } else if (nurse.position === 'RN') {
-            // RN, AN 간호사: 제약 조건을 지키면서 스케줄 작성
+            // RN: 제약 조건을 지키면서 스케줄 작성
             nurseSchedule = createRNSchedule(nurse, daysInMonth, year, month, constraints, schedule);
+          } else if (nurse.position === 'AN') {
+            // AN: DDENOO 패턴으로 이미 배정됨 - 스킵
+            console.log(`${nurse.name}: AN은 DDENOO 패턴으로 이미 배정됨 - 스킵`);
+            return;
           } else {
-            // AN은 제외
-            console.log(`${nurse.name}: AN - 스케줄 생성 제외`);
             return;
           }
           
@@ -239,7 +260,14 @@ export function optimizeSchedule(
     diversifySimilarSchedules(sortedNurses, schedule, daysInMonth, constraints);
     console.log('=== 유사 스케줄 분산 완료 ===');
 
-    // 20단계: 조정 이후 제약조건 재적용 (연속근무/휴무, N-OO, E-D 금지, HN, 야간전담, RN 최소 1명)
+    // 20단계: AN 스케줄 점수 기반 균등화
+    console.log('=== AN 스케줄 균등화 시작 ===');
+    if (anNurses.length > 0) {
+      equalizeANSchedules(anNurses, schedule, daysInMonth, constraints);
+    }
+    console.log('=== AN 스케줄 균등화 완료 ===');
+
+    // 21단계: 조정 이후 제약조건 재적용 (연속근무/휴무, N-OO, E-D 금지, HN, 야간전담, RN 최소 1명)
     console.log('=== 조정 이후 제약조건 재적용 시작 ===');
     enforceNOOConstraint(sortedNurses, schedule, daysInMonth);
     enforceEDProhibition(sortedNurses, schedule, daysInMonth);

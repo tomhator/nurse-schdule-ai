@@ -82,16 +82,12 @@ export function applyExistingScheduleConstraints(
           }
           consecutiveOffDays++;
           
-          // 최대 연속 휴무일 초과 시 강제 근무 배치
+          // 최대 연속 휴무일 초과 시 강제 근무 배치 (모든 간호사)
           if (consecutiveOffDays > maxConsecutiveOffDays) {
-            // AN은 건드리지 않음
-            if (nurse.position !== 'AN') {
-              const workTypes = ['D', 'E', 'N'];
-              // 선호 근무를 고려한 강제 근무 배치
-              const selectedWorkType = selectWorkTypeByPreference(workTypes, nurse);
-              schedule[nurse.id][day] = selectedWorkType;
-              console.log(`${nurse.name}: 최대 연속 휴무일 초과로 ${day}일 강제 ${selectedWorkType} 배치 (선호 근무 고려)`);
-            }
+            const workTypes = ['D', 'E', 'N'];
+            const selectedWorkType = selectWorkTypeByPreference(workTypes, nurse);
+            schedule[nurse.id][day] = selectedWorkType;
+            console.log(`${nurse.name}: 최대 연속 휴무일 초과로 ${day}일 강제 ${selectedWorkType} 배치 (선호 근무 고려)`);
             consecutiveOffDays = 0;
           }
         } else {
@@ -382,8 +378,8 @@ export function enforceEDProhibition(
         // D를 다른 근무로 변경 (O, E, N 중 선택)
         const alternativeWorkTypes = ['O', 'E', 'N'];
         
-        // AN인 경우 M도 추가
-        if (nurse.position === 'AN') {
+        // AN의 M 가용 여부에 따라 M 포함
+        if (nurse.workAvailability?.M) {
           alternativeWorkTypes.push('M');
         }
         
