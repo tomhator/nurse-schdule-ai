@@ -24,6 +24,7 @@ export default function Home() {
   const [shortageData, setShortageData] = useState<{[day: number]: number}>({});
   const [totalRequiredStaffing, setTotalRequiredStaffing] = useState<number>(0);
   const [nurses, setNurses] = useState<any[]>([]);
+  const [preExistingOffDays, setPreExistingOffDays] = useState<{[nurseId: number]: number[]}>({});
 
   // 간호사 데이터 불러오기
   useEffect(() => {
@@ -111,6 +112,23 @@ export default function Home() {
   const getCurrentStatus = (nurseId: number, day: number) => {
     const key = `${nurseId}-${day}`;
     return scheduleData[currentYear]?.[currentMonth]?.[key] || '-';
+  };
+
+  // 스케줄 추천 전 기존 O 부분이 있는지 확인
+  const isPreExistingOffDay = (nurseId: number, day: number) => {
+    return preExistingOffDays[nurseId]?.includes(day) || false;
+  };
+
+  // 근무 유형에 따른 테두리 색상 클래스 반환
+  const getBorderColorClass = (workType: string) => {
+    switch (workType) {
+      case 'D': return 'border-blue-500';
+      case 'E': return 'border-orange-500';
+      case 'N': return 'border-purple-500';
+      case 'M': return 'border-green-500';
+      case 'O': return 'border-red-500';
+      default: return 'border-gray-200';
+    }
   };
 
   // 최소 휴무일 계산 (주말 + 공휴일)
@@ -262,9 +280,11 @@ export default function Home() {
     loadSavedSchedule();
   }, [currentYear, currentMonth]);
 
-  // 월이 변경될 때 최소 휴무일 업데이트
+  // 월이 변경될 때 최소 휴무일 업데이트 및 기존 O 부분 추적 상태 리셋
   useEffect(() => {
     // 최소 휴무일이 자동으로 계산되어 표시됨
+    // 월이 변경되면 기존 O 부분 추적 상태 리셋
+    setPreExistingOffDays({});
   }, [currentYear, currentMonth]);
 
   // 스케줄 데이터가 변경될 때 남은 off 재계산
@@ -316,6 +336,19 @@ export default function Home() {
 
     if (confirm('현재 스케줄을 자동 추천으로 덮어쓰시겠습니까?')) {
       try {
+        // 스케줄 추천 전 기존 O 부분 추적
+        const existingOffDays: {[nurseId: number]: number[]} = {};
+        nurses.forEach(nurse => {
+          existingOffDays[nurse.id] = [];
+          getDaysInMonth(currentYear, currentMonth).forEach(day => {
+            const key = `${nurse.id}-${day}`;
+            const currentStatus = scheduleData[currentYear]?.[currentMonth]?.[key];
+            if (currentStatus === 'O') {
+              existingOffDays[nurse.id].push(day);
+            }
+          });
+        });
+        setPreExistingOffDays(existingOffDays);
         // 근무 조건 설정 불러오기
         const savedConstraints = localStorage.getItem('work_constraints');
         let workConstraints = {
@@ -416,6 +449,9 @@ export default function Home() {
       // 로컬 스토리지에서도 해당 월의 스케줄 데이터 삭제
       const storageKey = `schedule_${currentYear}_${currentMonth}`;
       localStorage.removeItem(storageKey);
+      
+      // 기존 O 부분 추적 상태 리셋
+      setPreExistingOffDays({});
       
       alert(`${currentYear}년 ${currentMonth}월 스케줄이 초기화되고 저장되었습니다.`);
     }
@@ -624,11 +660,13 @@ export default function Home() {
                     const currentStatus = getCurrentStatus(nurse.id, day);
                     const isDropdownOpen = activeDropdown === `${nurse.id}-${day}`;
                     const statusOption = workStatusOptions.find(option => option.value === currentStatus);
+                    const isPreExisting = isPreExistingOffDay(nurse.id, day);
+                    const borderColorClass = isPreExisting ? getBorderColorClass('O') : 'border-gray-200';
                     
                     return (
                       <div
                         key={day}
-                        className={`relative w-13 h-10 border border-gray-200 cursor-pointer hover:bg-blue-50 transition-colors ${
+                        className={`relative w-13 h-10 border ${borderColorClass} cursor-pointer hover:bg-blue-50 transition-colors ${
                           isWeekendOrHoliday(currentYear, currentMonth, day)
                             ? 'bg-red-50'
                             : 'bg-white'
@@ -704,11 +742,13 @@ export default function Home() {
                     const currentStatus = getCurrentStatus(nurse.id, day);
                     const isDropdownOpen = activeDropdown === `${nurse.id}-${day}`;
                     const statusOption = workStatusOptions.find(option => option.value === currentStatus);
+                    const isPreExisting = isPreExistingOffDay(nurse.id, day);
+                    const borderColorClass = isPreExisting ? getBorderColorClass('O') : 'border-gray-200';
                     
                     return (
                       <div
                         key={day}
-                        className={`relative w-13 h-10 border border-gray-200 cursor-pointer hover:bg-blue-50 transition-colors ${
+                        className={`relative w-13 h-10 border ${borderColorClass} cursor-pointer hover:bg-blue-50 transition-colors ${
                           isWeekendOrHoliday(currentYear, currentMonth, day)
                             ? 'bg-red-50'
                             : 'bg-white'
