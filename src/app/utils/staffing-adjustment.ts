@@ -7,8 +7,6 @@ export function adjustStaffingDeficits(
   daysInMonth: number[],
   staffingRequirements: StaffingRequirement,
   constraints: ScheduleConstraints,
-  _year: number,
-  _month: number
 ): { [nurseId: number]: { [day: number]: string } } {
   console.log('=== 근무 조건 설정 vs 실제 근무표 비교 및 조정 시작 ===');
   
@@ -39,10 +37,10 @@ export function adjustStaffingDeficits(
     
     // 근무 조건 설정에서 필요한 인원 수 계산
     const requiredWorkers = {
-      D: (staffingRequirements.HN_D || 0) + (staffingRequirements.RN_D || 0) + (staffingRequirements.AN_D || 0),
-      E: (staffingRequirements.HN_E || 0) + (staffingRequirements.RN_E || 0) + (staffingRequirements.AN_E || 0),
-      N: (staffingRequirements.HN_N || 0) + (staffingRequirements.RN_N || 0) + (staffingRequirements.AN_N || 0),
-      M: (staffingRequirements.HN_M || 0) + (staffingRequirements.RN_M || 0) + (staffingRequirements.AN_M || 0)
+      D: Number(staffingRequirements.HN_D || 0) + Number(staffingRequirements.RN_D || 0) + Number(staffingRequirements.AN_D || 0),
+      E: Number(staffingRequirements.HN_E || 0) + Number(staffingRequirements.RN_E || 0) + Number(staffingRequirements.AN_E || 0),
+      N: Number(staffingRequirements.HN_N || 0) + Number(staffingRequirements.RN_N || 0) + Number(staffingRequirements.AN_N || 0),
+      M: Number(staffingRequirements.HN_M || 0) + Number(staffingRequirements.RN_M || 0) + Number(staffingRequirements.AN_M || 0)
     };
     
     console.log(`${day}일 필요 인원 수:`, requiredWorkers);

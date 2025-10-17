@@ -200,7 +200,7 @@ export default function Home() {
   };
 
   // 특정 날짜의 근무자 수 계산 (O와 - 제외)
-  const calculateWorkersCount = (day: number) => {
+  const calculateWorkersCount = useCallback((day: number) => {
     let count = 0;
     nurses.forEach(nurse => {
       const key = `${nurse.id}-${day}`;
@@ -211,7 +211,7 @@ export default function Home() {
       }
     });
     return count;
-  };
+  }, [nurses, scheduleData, currentYear, currentMonth]);
 
   // 각 날짜별 O근무자 수 계산
   const calculateOCount = (day: number) => {
@@ -242,9 +242,9 @@ export default function Home() {
   };
 
   // 일일 필수 근무 인원 불러오기
-  const getRequiredStaffing = () => {
+  const getRequiredStaffing = useCallback(() => {
     return getTotalStaffing();
-  };
+  }, []);
 
   // 부족 인원 계산
   const calculateShortage = useCallback((day: number) => {
@@ -253,7 +253,7 @@ export default function Home() {
     const shortage = Math.max(0, requiredStaffing - currentWorkers);
     
     return shortage;
-  }, []);
+  }, [calculateWorkersCount, getRequiredStaffing]);
 
   // 저장된 스케줄 불러오기
   useEffect(() => {
