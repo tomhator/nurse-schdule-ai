@@ -128,7 +128,7 @@ function canAssignWithConstraints(
   if (workType === 'N') return false;
 
   // M 근무는 AN만 가능
-  if (workType === 'M' && nurse.position !== 'AN') return false;
+  if (workType === 'M' && (nurse.position as string) !== 'AN') return false;
 
   // 근무가능 체크 (불리언 맵)
   if (nurse.workAvailability && typeof nurse.workAvailability === 'object') {
