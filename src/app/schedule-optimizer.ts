@@ -111,7 +111,7 @@ export function optimizeSchedule(
       if (group.name === '야간전담 간호사') {
         console.log('=== 야간전담 간호사 교차 배정 시작 ===');
         if (group.nurses.length > 1) {
-          applyNightDedicatedAlternatingSchedule(group.nurses, schedule, daysInMonth, year, month);
+          applyNightDedicatedAlternatingSchedule(group.nurses, schedule, daysInMonth);
         } else {
           // 1명인 경우에도 NNOO 패턴 적용
           applySingleNightDedicatedSchedule(group.nurses[0], schedule, daysInMonth);
