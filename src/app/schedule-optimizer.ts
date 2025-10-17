@@ -14,7 +14,7 @@ import {
   removeNightDedicatedDEWork
 } from './schedulers/night-dedicated-scheduler';
 import { createRNSchedule, applyRNScheduleConditions, applyRNAlternateOffPattern } from './schedulers/rn-scheduler';
-import { createANSchedule, applyANAlternateOffPattern, applyANWeeklyNSchedule, applyANDDEOPattern, equalizeANSchedules } from './schedulers/an-scheduler';
+import { applyANAlternateOffPattern, applyANWeeklyNSchedule, applyANDDEOPattern, equalizeANSchedules } from './schedulers/an-scheduler';
 
 // 제약조건 로직 임포트
 import {
@@ -104,7 +104,7 @@ export function optimizeSchedule(
     // 우선순위: HN > 야간근무자 > RN > AN
     const priorityGroups = getNursesByPriority(sortedNurses);
     
-    priorityGroups.forEach((group, groupIndex) => {
+    priorityGroups.forEach((group) => {
       console.log(`=== ${group.name} 그룹 스케줄 작성 시작 ===`);
       
       // 야간전담 간호사들은 교차 배정
@@ -123,7 +123,7 @@ export function optimizeSchedule(
         console.log(updatedScheduleArray);
       } else {
         // 일반 간호사들은 개별 스케줄 작성 (야간전담 간호사 제외)
-        group.nurses.forEach((nurse, nurseIndex) => {
+        group.nurses.forEach((nurse) => {
           // 야간전담 간호사는 이미 위에서 처리했으므로 제외
           if (nurse.nightDedicated) {
             console.log(`${nurse.name}: 야간전담 간호사 - 개별 스케줄 생성 제외`);
@@ -291,7 +291,7 @@ export function optimizeSchedule(
       message: violations.length === 0 ? '스케줄이 성공적으로 생성되었습니다.' : '일부 제약 조건을 위반했습니다.',
       violations
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       schedule: {},

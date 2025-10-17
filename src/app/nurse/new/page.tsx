@@ -36,7 +36,7 @@ export default function NewNursePage() {
       } else {
         alert(result.message);
       }
-    } catch (error) {
+    } catch {
       alert('간호사 추가 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);

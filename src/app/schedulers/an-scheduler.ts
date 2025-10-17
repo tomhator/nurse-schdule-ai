@@ -83,7 +83,7 @@ export function applyANWeeklyNSchedule(
   
   // 각 AN의 목표 N 근무 개수를 동일하게 설정
   const targetNCounts: { [nurseId: number]: number } = {};
-  availableANNurses.forEach((nurse, index) => {
+  availableANNurses.forEach((nurse) => {
     targetNCounts[nurse.id] = baseNDays;
   });
   
@@ -117,7 +117,7 @@ export function applyANWeeklyNSchedule(
     // N근무가 배정되지 않은 경우에만 1명 배정
     if (assignedCount === 0) {
       // 모든 AN이 동일한 N근무 개수를 가지도록 시프트 방식으로 선택
-      let minNCount = Math.min(...Object.values(nurseNCounts));
+      const minNCount = Math.min(...Object.values(nurseNCounts));
       
       // N근무 개수가 가장 적은 AN들을 찾아서 그 중에서 선택
       const candidatesWithMinN = availableANNurses.filter(nurse => 
@@ -414,7 +414,7 @@ export function createANSchedule(
       });
 
       // RN과 동일한 제약 적용: E 다음 D 금지
-      let filtered = applyWorkTypeConstraints(filteredWorkTypes, nurseSchedule, day, daysInMonth);
+      const filtered = applyWorkTypeConstraints(filteredWorkTypes, nurseSchedule, day, daysInMonth);
 
       if (filtered.length > 0) {
         const selected = selectWorkTypeByPreference(filtered, nurse);

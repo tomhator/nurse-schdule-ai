@@ -44,7 +44,7 @@ export function saveStaffingData(data: StaffingData): { success: boolean; messag
   try {
     localStorage.setItem('staffing_data', JSON.stringify(data));
     return { success: true, message: '인원 설정이 저장되었습니다.' };
-  } catch (error) {
+  } catch {
     return { success: false, message: '인원 설정 저장에 실패했습니다.' };
   }
 }
@@ -57,7 +57,7 @@ export function loadStaffingData(): StaffingData {
       return JSON.parse(savedData);
     }
     return {};
-  } catch (error) {
+  } catch {
     return {};
   }
 }
@@ -67,7 +67,7 @@ export function resetStaffingData(): { success: boolean; message: string } {
   try {
     localStorage.removeItem('staffing_data');
     return { success: true, message: '인원 설정이 초기화되었습니다.' };
-  } catch (error) {
+  } catch {
     return { success: false, message: '인원 설정 초기화에 실패했습니다.' };
   }
 }
@@ -80,7 +80,7 @@ export function updateStaffingCount(positionId: string, workTypeId: string, coun
     currentData[key] = count;
     saveStaffingData(currentData);
     return { success: true, message: '인원 수가 업데이트되었습니다.' };
-  } catch (error) {
+  } catch {
     return { success: false, message: '인원 수 업데이트에 실패했습니다.' };
   }
 }
@@ -88,7 +88,7 @@ export function updateStaffingCount(positionId: string, workTypeId: string, coun
 // 총 인원 수 계산 (클라이언트 사이드)
 export function calculateTotalStaffing(staffingData: StaffingData): number {
   let total = 0;
-  Object.values(staffingData).forEach((count: any) => {
+    Object.values(staffingData).forEach((count: number | string) => {
     if (typeof count === 'number' && !count.toString().startsWith('_')) {
       total += count;
     }
@@ -114,7 +114,7 @@ export function saveStaffingWithTotal(staffingData: StaffingData): { success: bo
     
     localStorage.setItem('staffing_data', JSON.stringify(dataWithTotal));
     return { success: true, message: `인원 설정이 저장되었습니다. (총 ${totalStaffing}명)` };
-  } catch (error) {
+  } catch {
     return { success: false, message: '인원 설정 저장에 실패했습니다.' };
   }
 }
@@ -127,8 +127,8 @@ export function getTotalStaffing(): number {
       const data = JSON.parse(savedData);
       return data._totalStaffing || 0;
     }
-  } catch (error) {
-    console.error('총 인원 수를 불러오는데 실패했습니다:', error);
+  } catch {
+    console.error('총 인원 수를 불러오는데 실패했습니다.');
   }
   return 0;
 }
@@ -156,8 +156,8 @@ export function getStaffingRequirements(): { [position: string]: { [workType: st
       
       return requirements;
     }
-  } catch (error) {
-    console.error('필수 인원 설정을 불러오는데 실패했습니다:', error);
+  } catch {
+    console.error('필수 인원 설정을 불러오는데 실패했습니다.');
   }
   
   // 기본값 반환

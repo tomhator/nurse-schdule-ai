@@ -14,11 +14,10 @@ export interface ScheduleData {
 // 스케줄 저장
 export async function saveSchedule(year: number, month: number, data: {[key: string]: string}) {
   try {
-    const storageKey = `schedule_${year}_${month}`;
     // 실제 구현에서는 데이터베이스에 저장
     // 여기서는 로컬 스토리지 시뮬레이션
     return { success: true, message: `${year}년 ${month}월 스케줄이 저장되었습니다.` };
-  } catch (error) {
+  } catch {
     return { success: false, message: '스케줄 저장에 실패했습니다.' };
   }
 }
@@ -26,10 +25,9 @@ export async function saveSchedule(year: number, month: number, data: {[key: str
 // 스케줄 불러오기
 export async function loadSchedule(year: number, month: number) {
   try {
-    const storageKey = `schedule_${year}_${month}`;
     // 실제 구현에서는 데이터베이스에서 불러오기
     return { success: true, data: {} };
-  } catch (error) {
+  } catch {
     return { success: false, data: {} };
   }
 }
@@ -37,10 +35,9 @@ export async function loadSchedule(year: number, month: number) {
 // 스케줄 초기화
 export async function resetSchedule(year: number, month: number) {
   try {
-    const storageKey = `schedule_${year}_${month}`;
     // 실제 구현에서는 데이터베이스에서 삭제
     return { success: true, message: `${year}년 ${month}월 스케줄이 초기화되었습니다.` };
-  } catch (error) {
+  } catch {
     return { success: false, message: '스케줄 초기화에 실패했습니다.' };
   }
 }

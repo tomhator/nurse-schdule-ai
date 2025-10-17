@@ -18,12 +18,12 @@ import { ScheduleConstraints, Nurse } from './types';
 export default function Home() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
-  const [requiredStaff, setRequiredStaff] = useState(3);
+  // const [requiredStaff, setRequiredStaff] = useState(3); // 사용하지 않는 변수
   const [scheduleData, setScheduleData] = useState<{[year: number]: {[month: number]: {[key: string]: string}}}>({});
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [shortageData, setShortageData] = useState<{[day: number]: number}>({});
   const [totalRequiredStaffing, setTotalRequiredStaffing] = useState<number>(0);
-  const [nurses, setNurses] = useState<any[]>([]);
+  const [nurses, setNurses] = useState<Nurse[]>([]);
   const [preExistingOffDays, setPreExistingOffDays] = useState<{[nurseId: number]: number[]}>({});
 
   // 간호사 데이터 불러오기
@@ -271,8 +271,8 @@ export default function Home() {
               [currentMonth]: parsedData
             }
           }));
-        } catch (error) {
-          console.error('저장된 스케줄 데이터를 불러오는데 실패했습니다:', error);
+        } catch {
+          console.error('저장된 스케줄 데이터를 불러오는데 실패했습니다.');
         }
       }
     };
@@ -359,8 +359,8 @@ export default function Home() {
         if (savedConstraints) {
           try {
             workConstraints = JSON.parse(savedConstraints);
-          } catch (error) {
-            console.error('근무 조건 설정을 불러오는데 실패했습니다:', error);
+          } catch {
+            console.error('근무 조건 설정을 불러오는데 실패했습니다.');
           }
         }
 
@@ -428,9 +428,9 @@ export default function Home() {
         } else {
           alert(`스케줄이 생성되었지만 일부 제약 조건을 위반했습니다:\n${result.violations.join('\n')}\n\n수동으로 조정해주세요.`);
         }
-      } catch (error) {
+          } catch {
         alert('스케줄 추천 중 오류가 발생했습니다.');
-        console.error('스케줄 추천 오류:', error);
+        console.error('스케줄 추천 오류가 발생했습니다.');
       }
     }
   };
@@ -631,7 +631,7 @@ export default function Home() {
                 .filter(n => n.position !== 'AN')
                 .sort((a, b) => {
                   // HN > RN > N-RN > AN 순서로 정렬
-                  const getSortOrder = (nurse: any) => {
+                  const getSortOrder = (nurse: {position: string, nightDedicated?: boolean}) => {
                     if (nurse.position === 'HN') return 1;
                     if (nurse.position === 'RN' && !nurse.nightDedicated) return 2;
                     if (nurse.nightDedicated) return 3;

@@ -77,9 +77,9 @@ export function applyExistingScheduleConstraints(
         const workType = schedule[nurse.id][day];
         
         if (workType === 'O') {
-          if (consecutiveOffDays === 0) {
-            startOffDay = day;
-          }
+        if (consecutiveOffDays === 0) {
+          // startOffDay = day; // 사용하지 않는 변수
+        }
           consecutiveOffDays++;
           
           // 최대 연속 휴무일 초과 시 강제 근무 배치 (모든 간호사)
@@ -150,7 +150,7 @@ export function enforceConsecutiveWorkOffLimits(
       
       if (workType && workType !== 'O' && workType !== '-') {
         if (consecutiveWorkDays === 0) {
-          startWorkDay = day;
+          // startWorkDay = day; // 사용하지 않는 변수
         }
         consecutiveWorkDays++;
         consecutiveOffDays = 0;
@@ -177,7 +177,7 @@ export function enforceConsecutiveWorkOffLimits(
       
       if (workType === 'O') {
         if (consecutiveOffDays === 0) {
-          startOffDay = day;
+          // startOffDay = day; // 사용하지 않는 변수
         }
         consecutiveOffDays++;
         consecutiveWorkDays = 0;
@@ -447,7 +447,7 @@ export function applyMaxOffDaysLimit(
       
       // 초과된 OFF 개수만큼 근무로 변경
       let changedCount = 0;
-      for (let day of daysInMonth) {
+      for (const day of daysInMonth) {
         if (changedCount >= excessOffDays) break;
         
         if (schedule[nurse.id][day] === 'O') {

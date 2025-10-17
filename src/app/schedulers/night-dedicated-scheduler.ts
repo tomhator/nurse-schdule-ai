@@ -7,8 +7,8 @@ export function applyNightDedicatedAlternatingSchedule(
   nightDedicatedNurses: Nurse[],
   schedule: { [nurseId: number]: { [day: number]: string } },
   daysInMonth: number[],
-  year: number,
-  month: number
+  _year: number,
+  _month: number
 ): void {
   console.log('=== 야간전담 간호사 교차 배정 처리 ===');
   console.log('야간전담 간호사 수:', nightDedicatedNurses.length);

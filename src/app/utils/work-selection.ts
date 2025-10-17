@@ -42,7 +42,7 @@ export function selectWorkTypeByPriority(
   if (workTypes.length === 1) return workTypes[0];
   
   // RN과 AN의 우선순위 비율 적용
-  let weightedTypes: string[] = [];
+  const weightedTypes: string[] = [];
   
   if (nurse.position === 'RN') {
     // RN: D:E:N = 5:3:2

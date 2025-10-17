@@ -1,6 +1,6 @@
 // HN 간호사 스케줄링 로직
 
-import { Nurse, ScheduleConstraints } from '../types';
+import { Nurse } from '../types';
 import { isHoliday } from '../utils/date-utils';
 
 // HN 간호사 스케줄 생성

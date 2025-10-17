@@ -125,7 +125,7 @@ export function satisfyDailyTargetsByLocalSwap(
   daysInMonth.forEach(day => {
     const cur = countDay(day);
     (['D','E','N','M'] as const).forEach(wt => {
-      const need = (requiredByWork as any)[wt] || 0;
+      const need = (requiredByWork as {[key: string]: number})[wt] || 0;
       while (cur[wt] < need) {
         // O를 가진 간호사를 찾아 wt로 변경 시도
         let changed = false;
@@ -173,12 +173,12 @@ export function enforceMinOffFairness(
   };
 
   const countDayByType = (day: number) => {
-    const c: any = { D: 0, E: 0, N: 0, M: 0 };
+    const c: { D: number; E: number; N: number; M: number } = { D: 0, E: 0, N: 0, M: 0 };
     nurses.forEach(n => {
       const w = schedule[n.id]?.[day];
-      if (w && c[w] !== undefined) c[w] += 1;
+      if (w && c[w as keyof typeof c] !== undefined) c[w as keyof typeof c] += 1;
     });
-    return c as { D: number; E: number; N: number; M: number };
+    return c;
   };
 
   nurses.forEach(nurse => {
@@ -290,12 +290,12 @@ export function spreadOffOverlap(
   const active = nurses.filter(n => n.position !== 'HN' && !n.nightDedicated);
 
   const countDayByType = (day: number) => {
-    const c: any = { D: 0, E: 0, N: 0, M: 0 };
+    const c: { D: number; E: number; N: number; M: number } = { D: 0, E: 0, N: 0, M: 0 };
     nurses.forEach(n => {
       const w = schedule[n.id]?.[day];
-      if (w && c[w] !== undefined) c[w] += 1;
+      if (w && c[w as keyof typeof c] !== undefined) c[w as keyof typeof c] += 1;
     });
-    return c as { D: number; E: number; N: number; M: number };
+    return c;
   };
 
   for (let i = 0; i < active.length; i++) {
@@ -327,7 +327,7 @@ export function spreadOffOverlap(
 
             // d에서 mover의 O를 해제하고, td에 O를 설정
             // d에서 해제가 일일 요구치(A)를 떨어뜨리지 않도록 확인
-            const afterDaily = { ...daily } as any;
+            // const afterDaily = { ...daily }; // 사용하지 않는 변수
             // d에서 O→근무 전환은 하지 않고, 단순히 겹침 해소만: d는 a의 O만 유지
             // mover의 d는 O 해제 필요 없음(둘 다 O 유지해도 요구치 만족하면 넘어감)
             // 실제 이동은 td에 O를 추가하는 방식으로 처리
@@ -336,7 +336,7 @@ export function spreadOffOverlap(
             const tdCount = countDayByType(td);
             const curType = schedule[mover.id]?.[td];
             if (curType && (curType === 'D' || curType === 'E')) {
-              const need = (requiredByWork as any)?.[curType] ?? 0;
+              const need = (requiredByWork as {[key: string]: number})?.[curType] ?? 0;
               if (tdCount[curType] <= need) continue;
             }
 
@@ -440,9 +440,9 @@ function safeToRemoveFromDay(
   day: number,
   schedule: { [nurseId: number]: { [day: number]: string } }
 ): boolean {
-  const prev = schedule[nurse.id]?.[day - 1];
+  // const prev = schedule[nurse.id]?.[day - 1]; // 사용하지 않는 변수
   const cur = schedule[nurse.id]?.[day];
-  const next = schedule[nurse.id]?.[day + 1];
+  // const next = schedule[nurse.id]?.[day + 1]; // 사용하지 않는 변수
   // 현재 근무를 O로 바꾸는 것은 N-OO에는 유리하고, E-D 금지에도 영향 없음
   // 단, RN 일일 최소 1명 등 전역 제약은 최종 단계에서 재강제하므로 여기서는 허용
   // 야간전담/HN은 상위에서 이미 배제

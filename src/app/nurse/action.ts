@@ -88,8 +88,8 @@ export function getNurses(): Nurse[] {
     ];
     
     return defaultNurses;
-  } catch (error) {
-    console.error('간호사 목록을 불러오는데 실패했습니다:', error);
+  } catch {
+    console.error('간호사 목록을 불러오는데 실패했습니다.');
     return [];
   }
 }
@@ -173,7 +173,7 @@ export function addNurse(nurseData: Omit<Nurse, 'id'>): { success: boolean; mess
       message: '간호사가 추가되었습니다.', 
       nurse: newNurse 
     };
-  } catch (error) {
+  } catch {
     return { success: false, message: '간호사 추가에 실패했습니다.' };
   }
 }
@@ -197,7 +197,7 @@ export function updateNurse(id: number, nurseData: Partial<Omit<Nurse, 'id'>>): 
     localStorage.setItem('nurses_data', JSON.stringify(nurses));
     
     return { success: true, message: '간호사 정보가 수정되었습니다.' };
-  } catch (error) {
+  } catch {
     return { success: false, message: '간호사 수정에 실패했습니다.' };
   }
 }
@@ -220,7 +220,7 @@ export function deleteNurse(id: number): { success: boolean; message: string } {
     localStorage.setItem('nurses_data', JSON.stringify(filteredNurses));
     
     return { success: true, message: '간호사가 삭제되었습니다.' };
-  } catch (error) {
+  } catch {
     return { success: false, message: '간호사 삭제에 실패했습니다.' };
   }
 }
@@ -245,7 +245,7 @@ export function updateNurseVacation(id: number, remainingVacation: number, usedV
     localStorage.setItem('nurses_data', JSON.stringify(nurses));
     
     return { success: true, message: '연차 정보가 업데이트되었습니다.' };
-  } catch (error) {
+  } catch {
     return { success: false, message: '연차 정보 업데이트에 실패했습니다.' };
   }
 }
@@ -292,7 +292,7 @@ export function saveMonthlySchedulesToNurses(year: number, month: number, curren
 
     localStorage.setItem('nurses_data', JSON.stringify(updatedNurses));
     return { success: true, message: `${year}년 ${month}월 간호사별 스케줄이 저장되었습니다.` };
-  } catch (error) {
+  } catch {
     return { success: false, message: '간호사별 스케줄 저장에 실패했습니다.' };
   }
 }

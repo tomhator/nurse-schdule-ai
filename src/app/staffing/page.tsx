@@ -3,14 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  getPositions, 
-  getWorkTypes, 
-  saveStaffingData, 
-  loadStaffingData, 
-  resetStaffingData, 
-  updateStaffingCount,
-  saveStaffingWithTotal,
-  getTotalStaffing
+  saveStaffingWithTotal
 } from './action';
 
 export default function StaffingPage() {
@@ -77,8 +70,8 @@ export default function StaffingPage() {
     if (savedData) {
       try {
         setStaffingData(JSON.parse(savedData));
-      } catch (error) {
-        console.error('저장된 인원 설정 데이터를 불러오는데 실패했습니다:', error);
+      } catch {
+        console.error('저장된 인원 설정 데이터를 불러오는데 실패했습니다.');
       }
     }
     
@@ -87,8 +80,8 @@ export default function StaffingPage() {
     if (savedConstraints) {
       try {
         setWorkConstraints(JSON.parse(savedConstraints));
-      } catch (error) {
-        console.error('저장된 근무 조건 설정을 불러오는데 실패했습니다:', error);
+      } catch {
+        console.error('저장된 근무 조건 설정을 불러오는데 실패했습니다.');
       }
     }
   }, []);

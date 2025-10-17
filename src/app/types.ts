@@ -12,8 +12,16 @@ export interface Nurse {
   };
   nightDedicated: boolean;
   weekendWork: boolean;
-  vacationDays: number;
-  usedVacationDays: number;
+  remainingVacation: number;
+  usedVacation: number;
+  // 간호사별 월별 스케줄 저장소 (year -> month -> day -> status)
+  schedules?: {
+    [year: number]: {
+      [month: number]: {
+        [day: number]: string;
+      }
+    }
+  };
 }
 
 export interface StaffingRequirement {

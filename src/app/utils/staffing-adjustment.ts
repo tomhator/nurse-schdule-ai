@@ -7,8 +7,8 @@ export function adjustStaffingDeficits(
   daysInMonth: number[],
   staffingRequirements: StaffingRequirement,
   constraints: ScheduleConstraints,
-  year: number,
-  month: number
+  _year: number,
+  _month: number
 ): { [nurseId: number]: { [day: number]: string } } {
   console.log('=== 근무 조건 설정 vs 실제 근무표 비교 및 조정 시작 ===');
   

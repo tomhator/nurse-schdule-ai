@@ -84,7 +84,7 @@ export function createRNSchedule(
   let consecutiveWorkDays = 0;
   let consecutiveOffDays = 0;
   
-  for (let day of daysInMonth) {
+  for (const day of daysInMonth) {
     // 미리 입력된 스케줄이 있으면 건드리지 않음
     if (nurseSchedule[day] !== '-') {
       // 미리 입력된 스케줄은 그대로 유지하고 카운트만 업데이트

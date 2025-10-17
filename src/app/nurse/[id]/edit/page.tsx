@@ -21,7 +21,7 @@ export default function EditNursePage() {
       const nurse = nurses.find(n => n.id === nurseId);
       
       if (nurse) {
-        const { id, ...nurseWithoutId } = nurse;
+        const { id: _, ...nurseWithoutId } = nurse;
         setNurseData(nurseWithoutId);
       } else {
         alert('간호사를 찾을 수 없습니다.');
@@ -51,7 +51,7 @@ export default function EditNursePage() {
       } else {
         alert(result.message);
       }
-    } catch (error) {
+    } catch {
       alert('간호사 수정 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
