@@ -296,7 +296,7 @@ export default function Home() {
   useEffect(() => {
     const requiredStaffing = getRequiredStaffing();
     setTotalRequiredStaffing(requiredStaffing);
-  }, [currentYear, currentMonth]);
+  }, [currentYear, currentMonth, getRequiredStaffing]);
 
   // 부족 인원 계산
   useEffect(() => {
@@ -308,7 +308,7 @@ export default function Home() {
     }
     
     setShortageData(newShortageData);
-  }, [scheduleData, currentYear, currentMonth]);
+  }, [scheduleData, currentYear, currentMonth, calculateShortage]);
 
   const handlePrevMonth = () => {
     if (currentMonth === 1) {

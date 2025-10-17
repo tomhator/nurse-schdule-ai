@@ -91,7 +91,7 @@ export function optimizeSchedule(
     // 3.6단계: AN DDEO 패턴 기반 스케줄 배정
     console.log('=== AN DDEO 패턴 배정 시작 ===');
     if (anNurses.length > 0) {
-      applyANDDEOPattern(anNurses, schedule, daysInMonth, year, month);
+      applyANDDEOPattern(anNurses, schedule, daysInMonth);
     }
     console.log('=== AN DDEO 패턴 배정 완료 ===');
 
