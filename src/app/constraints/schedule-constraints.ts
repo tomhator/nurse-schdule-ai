@@ -70,7 +70,7 @@ export function applyExistingScheduleConstraints(
     if (constraints) {
       const maxConsecutiveOffDays = constraints.maxConsecutiveOffDays || 3;
       let consecutiveOffDays = 0;
-      let startOffDay = -1;
+      // let startOffDay = -1; // 사용하지 않는 변수
       
       for (let i = 0; i < daysInMonth.length; i++) {
         const day = daysInMonth[i];
@@ -140,8 +140,8 @@ export function enforceConsecutiveWorkOffLimits(
     
     let consecutiveWorkDays = 0;
     let consecutiveOffDays = 0;
-    let startWorkDay = -1;
-    let startOffDay = -1;
+    // let startWorkDay = -1; // 사용하지 않는 변수
+    // let startOffDay = -1; // 사용하지 않는 변수
     
     // 1단계: 연속근무일 제한 적용
     for (let i = 0; i < daysInMonth.length; i++) {
