@@ -225,7 +225,7 @@ export function optimizeSchedule(
 
     // 15단계: 근무 조건 설정 vs 실제 근무표 비교 및 조정
     console.log('=== 근무 조건 설정 vs 실제 근무표 비교 및 조정 시작 ===');
-    const adjustedSchedule = adjustStaffingDeficits(sortedNurses, schedule, daysInMonth, staffingRequirements, constraints, year, month);
+    const adjustedSchedule = adjustStaffingDeficits(sortedNurses, schedule, daysInMonth, staffingRequirements, constraints);
     Object.assign(schedule, adjustedSchedule);
     console.log('=== 근무 조건 설정 vs 실제 근무표 비교 및 조정 완료 ===');
 

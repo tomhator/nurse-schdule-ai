@@ -21,7 +21,7 @@ export default function EditNursePage() {
       const nurse = nurses.find(n => n.id === nurseId);
       
       if (nurse) {
-        const { id: _, ...nurseWithoutId } = nurse;
+        const { id, ...nurseWithoutId } = nurse;
         setNurseData(nurseWithoutId);
       } else {
         alert('간호사를 찾을 수 없습니다.');
