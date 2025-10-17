@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { getNurses, saveMonthlySchedulesToNurses } from './nurse/action';
 import { getTotalStaffing, getStaffingRequirements } from './staffing/action';
@@ -247,13 +247,13 @@ export default function Home() {
   };
 
   // 부족 인원 계산
-  const calculateShortage = (day: number) => {
+  const calculateShortage = useCallback((day: number) => {
     const currentWorkers = calculateWorkersCount(day);
     const requiredStaffing = getRequiredStaffing();
     const shortage = Math.max(0, requiredStaffing - currentWorkers);
     
     return shortage;
-  };
+  }, []);
 
   // 저장된 스케줄 불러오기
   useEffect(() => {

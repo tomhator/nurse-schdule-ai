@@ -168,8 +168,8 @@ export default function NursePage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {Object.entries(nurse.workAvailability)
-                        .filter(([_, available]) => available)
-                        .map(([shift, _]) => shift)
+                        .filter(([, available]) => available)
+                        .map(([shift]) => shift)
                         .join(', ')}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">

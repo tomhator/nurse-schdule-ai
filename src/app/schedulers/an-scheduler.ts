@@ -167,8 +167,8 @@ export function applyANDDEOPattern(
   anNurses: Nurse[],
   schedule: { [nurseId: number]: { [day: number]: string } },
   daysInMonth: number[],
-  year: number,
-  month: number
+  _year: number,
+  _month: number
 ): void {
   console.log('=== AN DDEO 패턴 기반 스케줄 배정 ===');
   

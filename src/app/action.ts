@@ -12,7 +12,7 @@ export interface ScheduleData {
 }
 
 // 스케줄 저장
-export async function saveSchedule(year: number, month: number, _data: {[key: string]: string}) {
+export async function saveSchedule(year: number, month: number) {
   try {
     // 실제 구현에서는 데이터베이스에 저장
     // 여기서는 로컬 스토리지 시뮬레이션
@@ -23,7 +23,7 @@ export async function saveSchedule(year: number, month: number, _data: {[key: st
 }
 
 // 스케줄 불러오기
-export async function loadSchedule(_year: number, _month: number) {
+export async function loadSchedule() {
   try {
     // 실제 구현에서는 데이터베이스에서 불러오기
     return { success: true, data: {} };

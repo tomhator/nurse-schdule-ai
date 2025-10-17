@@ -296,7 +296,7 @@ export function optimizeSchedule(
       success: false,
       schedule: {},
       message: '스케줄 생성 중 오류가 발생했습니다.',
-      violations: [error instanceof Error ? error.message : '알 수 없는 오류']
+      violations: ['알 수 없는 오류']
     };
   }
 }
